@@ -4,7 +4,7 @@
 Decor Areas Studio is an independent content publishing and analytics tool for creators and businesses. Users connect only their own authorized Pinterest accounts through Pinterest OAuth.
 
 Current demonstrated features:
-- OAuth Authorization Code connection
+- OAuth Authorization Code connection using minimum scopes needed for each environment
 - authorized account information
 - authorized organic analytics
 - Board selection
@@ -87,6 +87,7 @@ Do not show:
 
 ## Reviewer-facing principles
 - Official Pinterest OAuth only
+- Production OAuth requests only user_accounts:read, boards:read, pins:read and pins:write; boards:write is requested only for Sandbox test-board setup
 - Minimum scopes needed for the demonstrated features
 - Authorized account data only
 - API data fetched on demand
