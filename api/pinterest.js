@@ -7,7 +7,8 @@ function origin(req){if(process.env.APP_ORIGIN)return process.env.APP_ORIGIN.rep
 function redirectUri(req){return origin(req)+'/api/auth/pinterest/callback'}
 async function get(url,token){const r=await fetch(url,{headers:{Authorization:'Bearer '+token,Accept:'application/json'}});let d={};try{d=await r.json()}catch{};return{ok:r.ok,status:r.status,data:d}}
 function fail(out,res,fallback='Pinterest API request failed'){return res.status(out.status||502).json({ok:false,error:out.data?.message||out.data?.error||fallback})}
-function prodToken(req){const c=cookies(req);return c.da_access||null}
+function unseal(value){if(!value)return null;if(!String(value).startsWith('v1.'))return value;try{const [,iv64,tag64,data64]=String(value).split('.'),key=crypto.createHash('sha256').update(process.env.PINTEREST_APP_SECRET||'').digest(),dec=crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(iv64,'base64url'));dec.setAuthTag(Buffer.from(tag64,'base64url'));return Buffer.concat([dec.update(Buffer.from(data64,'base64url')),dec.final()]).toString('utf8')}catch{return null}}
+function prodToken(req){const c=cookies(req);return unseal(c.da_access)}
 function trustedPost(req){const h=String(req.headers.origin||'').replace(/\/$/,'');return !h||h===origin(req)}
 export default async function handler(req,res){res.setHeader('Cache-Control','no-store');const action=String(req.query.action||'');const c=cookies(req);
   if(action==='status')return res.status(200).json({ok:true,productionConnected:!!c.da_access,sandboxConnected:!!c.da_sandbox_access,appConfigured:!!process.env.PINTEREST_APP_ID&&!!process.env.PINTEREST_APP_SECRET});
@@ -27,7 +28,7 @@ export default async function handler(req,res){res.setHeader('Cache-Control','no
   }
   if(action==='sandbox-setup'){
     if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});
-    const token=c.da_sandbox_access;if(!token)return res.status(401).json({error:'Pinterest Sandbox is not connected'});
+    const token=unseal(c.da_sandbox_access);if(!token)return res.status(401).json({error:'Pinterest Sandbox is not connected'});
     const headers={Authorization:'Bearer '+token,'Content-Type':'application/json',Accept:'application/json'};
     const desiredName='Decor Areas Studio Test';
     const desiredDescription='Sandbox board for user-approved API testing.';
@@ -62,7 +63,7 @@ export default async function handler(req,res){res.setHeader('Cache-Control','no
     return res.status(200).json({ok:true,boards:clean,normalized:true});
   }
   if(action==='create'){
-    if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});const body=req.body||{},sandbox=body.sandbox===true,token=sandbox?c.da_sandbox_access:prodToken(req);if(!token)return res.status(401).json({error:'Pinterest API access is not connected'});if(!body.board_id||!String(body.title||'').trim())return res.status(400).json({error:'Board and title are required'});if(!body.image_base64)return res.status(400).json({error:'Choose an image'});const media_source={source_type:'image_base64',content_type:String(body.content_type||'image/jpeg'),data:String(body.image_base64),is_standard:true};const payload={board_id:String(body.board_id),title:String(body.title).trim(),description:String(body.description||''),alt_text:String(body.alt_text||''),media_source};if(body.destination)payload.link=String(body.destination);const rr=await fetch((sandbox?SANDBOX:PROD)+'/pins',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});let d={};try{d=await rr.json()}catch{};if(!rr.ok)return res.status(rr.status).json({error:d?.message||d?.error||'Pinterest rejected the publishing request'});return res.status(201).json({ok:true,pin:d,environment:sandbox?'sandbox':'production'});
+    if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});const body=req.body||{},sandbox=body.sandbox===true,token=sandbox?unseal(c.da_sandbox_access):prodToken(req);if(!token)return res.status(401).json({error:'Pinterest API access is not connected'});if(!body.board_id||!String(body.title||'').trim())return res.status(400).json({error:'Board and title are required'});if(!body.image_base64)return res.status(400).json({error:'Choose an image'});const media_source={source_type:'image_base64',content_type:String(body.content_type||'image/jpeg'),data:String(body.image_base64),is_standard:true};const payload={board_id:String(body.board_id),title:String(body.title).trim(),description:String(body.description||''),alt_text:String(body.alt_text||''),media_source};if(body.destination)payload.link=String(body.destination);const rr=await fetch((sandbox?SANDBOX:PROD)+'/pins',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});let d={};try{d=await rr.json()}catch{};if(!rr.ok)return res.status(rr.status).json({error:d?.message||d?.error||'Pinterest rejected the publishing request'});return res.status(201).json({ok:true,pin:d,environment:sandbox?'sandbox':'production'});
   }
   return res.status(400).json({error:'Unknown action'});
 }
