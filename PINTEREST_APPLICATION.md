@@ -1,38 +1,100 @@
-# Decor Areas Studio — Pinterest API application copy
+# Decor Areas Studio — Pinterest Standard access application
 
-## Trial application description
-Decor Areas Studio is an independent content marketing, creative and analytics application for creators and businesses. Users connect their own Pinterest accounts using Pinterest OAuth. The application allows authorized users to view their own account information and organic analytics, prepare content, select a Board, and explicitly publish Pins they choose. Decor Areas Studio uses the official Pinterest API and does not collect Pinterest passwords or session cookies and does not scrape Pinterest.
+## Product scope for this application
+Decor Areas Studio is an independent content publishing and analytics tool for creators and businesses. Users connect only their own authorized Pinterest accounts through Pinterest OAuth.
 
-## Standard upgrade description
-Decor Areas Studio is a content marketing, creative and analytics application for creators and businesses. Users connect their own Pinterest accounts through the official OAuth Authorization Code flow. Authorized users can review organic analytics and explicitly create and publish content to Boards they control. The application does not collect Pinterest credentials, does not use session-cookie authentication, does not scrape Pinterest, and does not provide unauthorized competitor research or benchmarking.
+Current demonstrated features:
+- OAuth Authorization Code connection
+- authorized account information
+- authorized organic analytics
+- Board selection
+- user-selected image/title/description/alt text
+- explicit user-confirmed Pin publishing in Pinterest Sandbox during Trial
 
-## Demo video sequence
-1. Open the live Decor Areas Studio HTTPS URL.
-2. Open API Demo.
-3. Click Start OAuth demo.
-4. Show the complete Pinterest consent screen.
-5. Approve access and return to Decor Areas Studio.
-6. Open Analytics and show live authorized organic metrics.
-7. Open Create and connect Pinterest Sandbox.
-8. Select a Board, add one image, title and description.
-9. Explicitly confirm publishing.
-10. Show the returned Pinterest Pin ID.
-
-## Do not include in the application
-- competitor research
-- benchmarking
-- scraping
+Not part of this Standard application:
+- competitor research or benchmarking
 - public-account intelligence
-- "maximum data" or "unlimited data"
+- scraping or automated extraction
+- automatic Pinterest actions without item-level user selection
+- ads, catalogs or ecommerce
+- AI training using Pinterest API data
 - claims of Pinterest partnership
-- scheduler until it is actually built and needed
+- scheduling until a real scheduler is built
 
-## Required environment variables on Vercel
-PINTEREST_APP_ID
-PINTEREST_APP_SECRET
+## Exact Standard upgrade description
+Decor Areas Studio is an independent content publishing and analytics application for creators and businesses. Users connect their own Pinterest accounts through Pinterest's OAuth Authorization Code flow. Authorized users can view organic analytics for their own account, select a Board, prepare content, and explicitly confirm each Pin they choose to publish. The application uses the Pinterest API, does not collect Pinterest passwords or Pinterest session cookies, does not scrape Pinterest, and does not provide competitor research, benchmarking or cross-account data aggregation. Pinterest API-derived account and analytics data is fetched on demand for the authorized user.
 
-APP_ORIGIN is optional. If set, use the canonical live origin, for example:
-https://decor-areas-studio.vercel.app
+## Application selections
+Developer purpose:
+- Consumer experience (business, merchant, customers, or users at scale)
 
-## OAuth redirect
-<APP_ORIGIN>/api/auth/pinterest/callback
+Use cases:
+- Pin creation & scheduling
+- Reporting
+- Pinner App
+
+Audience:
+- Pinners
+- Creators
+- Businesses
+
+Reads Pins and/or Boards Data:
+- Yes, mine
+
+## Canonical URLs
+Website:
+https://studio.decorareas.com
+
+Privacy:
+https://studio.decorareas.com/privacy/
+
+Terms:
+https://studio.decorareas.com/terms/
+
+Data deletion:
+https://studio.decorareas.com/data-deletion/
+
+Security:
+https://studio.decorareas.com/security/
+
+OAuth redirect URI:
+https://studio.decorareas.com/api/auth/pinterest/callback
+
+## Final demo video sequence
+Target length: about 2–3 minutes.
+
+1. Start on https://studio.decorareas.com and briefly show the independent Decor Areas Studio branding.
+2. Open API Demo and show the green HTTPS and privacy checks.
+3. Click Start OAuth demo.
+4. Show the complete Pinterest-hosted consent screen clearly, including the app name and permissions.
+5. Approve access and show the redirect back to Decor Areas Studio.
+6. Open Analytics and show live organic metrics for the authorized account.
+7. Open Create and show Pinterest Sandbox is connected.
+8. Select the Decor Areas Studio Test board.
+9. Add one image, title, description and optional alt text/destination URL.
+10. Click Publish this Sandbox Pin and show the explicit confirmation prompt before approving it.
+11. Show the successful Pinterest Pin ID returned by the API.
+12. If convenient, open the authenticated Pinterest profile and show the Sandbox Pin created for the same account.
+13. End on API Demo with all five checks green.
+
+Do not show:
+- Vercel environment variable values
+- Pinterest app secret
+- access or refresh tokens
+- browser developer tools containing credentials
+- old PinScope branding
+- unrelated future features
+
+## Reviewer-facing principles
+- Official Pinterest OAuth only
+- Minimum scopes needed for the demonstrated features
+- Authorized account data only
+- API data fetched on demand
+- No Pinterest passwords or Pinterest session cookies
+- No scraping
+- No competitor research or benchmarking
+- No cross-account aggregation
+- No Pinterest API data used for AI training
+- Explicit user selection for every publishing action
+- Trial writes demonstrated only in Pinterest Sandbox
+- Independent branding; no claim of Pinterest partnership
