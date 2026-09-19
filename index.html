@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Decor Areas Studio</title>
+  <meta name="description" content="Content planning, publishing and analytics for creators and businesses.">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">DA</div><div><strong>Decor Areas Studio</strong><small>Content & analytics</small></div></div>
+    <nav>
+      <button class="nav active" data-page="home">Overview</button>
+      <button class="nav" data-page="analytics">Analytics</button>
+      <button class="nav" data-page="create">Create</button>
+      <button class="nav" data-page="demo">API Demo</button>
+      <button class="nav" data-page="settings">Settings</button>
+    </nav>
+    <div class="connection"><span id="connectionDot"></span><div><strong>Pinterest API</strong><small id="connectionText">Not connected</small></div></div>
+  </aside>
+
+  <main>
+    <header><strong>Decor Areas Studio</strong><div class="header-right"><span class="api-badge">OFFICIAL API</span><span id="accountLabel">Access setup</span></div></header>
+
+    <section class="page active" id="page-home">
+      <div class="eyebrow">CONTENT MARKETING WORKSPACE</div>
+      <h1>Create, publish and measure your content</h1>
+      <p class="lead">Decor Areas Studio is an independent tool for creators and businesses. Users connect their own Pinterest account through Pinterest OAuth and explicitly choose the content they publish.</p>
+      <div class="cards">
+        <article><span>1</span><div><strong>Connect</strong><p>Authorize access on Pinterest. We never request your Pinterest password or session cookies.</p></div></article>
+        <article><span>2</span><div><strong>Measure</strong><p>View organic analytics for the Pinterest account that you authorized.</p></div></article>
+        <article><span>3</span><div><strong>Create</strong><p>Prepare an image, title, description, destination and Board selection.</p></div></article>
+        <article><span>4</span><div><strong>Publish</strong><p>Review and explicitly confirm each publishing action.</p></div></article>
+      </div>
+      <div class="panel policy"><strong>Independent branding</strong><p>Decor Areas Studio uses Pinterest only as a descriptive reference to the platform and API being connected. It is not an official Pinterest product and does not claim Pinterest Business Partner status.</p></div>
+    </section>
+
+    <section class="page" id="page-analytics">
+      <div class="pagehead"><div><div class="eyebrow">AUTHORIZED ACCOUNT</div><h1>Analytics</h1><p class="lead">Organic performance for the Pinterest account that explicitly authorized Decor Areas Studio.</p></div><button class="secondary" id="refreshAnalytics">Refresh</button></div>
+      <div class="notice" id="analyticsNotice">Connect an authorized Pinterest account to load analytics.</div>
+      <div class="metrics">
+        <article><small>Impressions</small><strong id="metricImpressions">—</strong></article>
+        <article><small>Saves</small><strong id="metricSaves">—</strong></article>
+        <article><small>Pin clicks</small><strong id="metricClicks">—</strong></article>
+        <article><small>Outbound clicks</small><strong id="metricOutbound">—</strong></article>
+      </div>
+      <div class="panel"><div class="panel-title"><strong>Top Pins for this authorized account</strong><small>Organic analytics</small></div><div class="table-wrap"><table><thead><tr><th>Pin ID</th><th>Impressions</th><th>Saves</th><th>Pin clicks</th><th>Outbound clicks</th></tr></thead><tbody id="topPins"><tr><td colspan="5">Connect an authorized account to load analytics.</td></tr></tbody></table></div></div>
+    </section>
+
+    <section class="page" id="page-create">
+      <div class="eyebrow">USER-APPROVED PUBLISHING</div><h1>Create</h1><p class="lead">Prepare one Pin and explicitly confirm the publishing action. Trial write testing uses Pinterest Sandbox.</p>
+      <div class="sandbox"><div><span class="sandbox-label">SANDBOX</span><strong>Trial write testing</strong><p>Sandbox content is used to demonstrate the integration without affecting production publishing.</p></div><a class="primary link-button" id="sandboxConnect" href="/api/pinterest?action=oauth&env=sandbox">Connect Sandbox</a></div>
+      <div class="notice" id="sandboxNotice">Sandbox authorization is available after Pinterest Trial access is approved.</div>
+      <div class="create-grid">
+        <div class="panel form">
+          <label>Board<select id="board"><option value="">Connect Sandbox first…</option></select></label>
+          <label>Title<input id="title" maxlength="100" placeholder="Example: Small bedroom storage ideas"></label>
+          <label>Description<textarea id="description" rows="5" placeholder="Describe the content"></textarea></label>
+          <label>Destination URL<input id="destination" type="url" placeholder="https://example.com/article"></label>
+          <label>Image<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+          <label>Alt text<input id="altText" maxlength="500" placeholder="Describe the image"></label>
+          <button class="primary" id="publish" disabled>Publish this Sandbox Pin</button>
+          <div class="notice" id="publishNotice">Nothing will be published without your explicit confirmation.</div>
+        </div>
+        <div class="panel"><strong>Preview</strong><div class="preview" id="preview">Image preview</div><h3 id="previewTitle">Your title</h3><p id="previewDescription">Your description will appear here.</p></div>
+      </div>
+    </section>
+
+    <section class="page" id="page-demo">
+      <div class="eyebrow">PINTEREST API ACCESS</div><h1>API Demo</h1><p class="lead">A reviewer-focused demonstration of official OAuth, authorized analytics and user-approved publishing.</p>
+      <div class="notice success"><strong>Use case:</strong> content marketing, creative and measurement for creators and businesses who explicitly connect their own Pinterest accounts.</div>
+      <div class="compliance"><span>Official OAuth</span><span>Authorized account data</span><span>User approves each Pin</span><span>No passwords</span><span>No session cookies</span><span>No scraping</span><span>Independent branding</span></div>
+      <div class="checks">
+        <article><span class="check good"></span><div><strong>HTTPS</strong><small>Current live app</small></div></article>
+        <article><span class="check good"></span><div><strong>Privacy policy</strong><small>/privacy/</small></div></article>
+        <article><span class="check" id="checkOAuth"></span><div><strong>OAuth</strong><small id="checkOAuthText">Awaiting connection</small></div></article>
+        <article><span class="check" id="checkAnalytics"></span><div><strong>Analytics</strong><small id="checkAnalyticsText">Awaiting connection</small></div></article>
+        <article><span class="check" id="checkSandbox"></span><div><strong>Sandbox</strong><small id="checkSandboxText">Awaiting connection</small></div></article>
+      </div>
+      <div class="panel demo-panel"><h3>Reviewer demo sequence</h3><ol><li>Open this live app.</li><li>Click Start OAuth demo and show the complete Pinterest consent screen.</li><li>Approve access and return to Decor Areas Studio.</li><li>Open Analytics and show authorized organic metrics.</li><li>Connect Sandbox, prepare one Pin, explicitly confirm publishing and show the returned Pin ID.</li></ol><a class="primary link-button wide" href="/api/pinterest?action=oauth&env=production">Start OAuth demo</a></div>
+    </section>
+
+    <section class="page" id="page-settings">
+      <div class="eyebrow">ACCOUNT</div><h1>Settings</h1>
+      <div class="cards">
+        <article><div><strong>OAuth Authorization Code</strong><p>Implemented for end-user authorization.</p></div></article>
+        <article><div><strong>User-approved publishing</strong><p>Explicit confirmation is required before creating a Pin.</p></div></article>
+        <article><div><strong>Scraping</strong><p>Not used.</p></div></article>
+        <article><div><strong>Pinterest passwords</strong><p>Never collected.</p></div></article>
+      </div>
+      <div class="panel legal-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/data-deletion/">Data deletion</a><a href="/security/">Security</a></div>
+    </section>
+  </main>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
