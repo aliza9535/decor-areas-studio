@@ -22,7 +22,7 @@
   </aside>
 
   <main>
-    <header><strong>Decor Areas Studio</strong><div class="header-right"><span class="api-badge">OFFICIAL API</span><span id="accountLabel">Access setup</span></div></header>
+    <header><strong>Decor Areas Studio</strong><div class="header-right"><span class="api-badge">Pinterest API v5</span><span id="accountLabel">Access setup</span></div></header>
 
     <section class="page active" id="page-home">
       <div class="eyebrow">CONTENT MARKETING WORKSPACE</div>
@@ -71,7 +71,7 @@
     <section class="page" id="page-demo">
       <div class="eyebrow">PINTEREST API ACCESS</div><h1>API Demo</h1><p class="lead">A reviewer-focused demonstration of official OAuth, authorized analytics and user-approved publishing.</p>
       <div class="notice success"><strong>Use case:</strong> content marketing, creative and measurement for creators and businesses who explicitly connect their own Pinterest accounts.</div>
-      <div class="compliance"><span>Official OAuth</span><span>Authorized account data</span><span>User approves each Pin</span><span>No passwords</span><span>No session cookies</span><span>No scraping</span><span>Independent branding</span></div>
+      <div class="compliance"><span>Official OAuth</span><span>Authorized account data</span><span>User approves each Pin</span><span>No Pinterest passwords</span><span>No Pinterest session cookies</span><span>No scraping</span><span>API data fetched on demand</span><span>No cross-account aggregation</span><span>No AI training with Pinterest data</span><span>Independent branding</span></div>
       <div class="checks">
         <article><span class="check good"></span><div><strong>HTTPS</strong><small>Current live app</small></div></article>
         <article><span class="check good"></span><div><strong>Privacy policy</strong><small>/privacy/</small></div></article>
@@ -79,7 +79,7 @@
         <article><span class="check" id="checkAnalytics"></span><div><strong>Analytics</strong><small id="checkAnalyticsText">Awaiting connection</small></div></article>
         <article><span class="check" id="checkSandbox"></span><div><strong>Sandbox</strong><small id="checkSandboxText">Awaiting connection</small></div></article>
       </div>
-      <div class="panel demo-panel"><h3>Reviewer demo sequence</h3><ol><li>Open this live app.</li><li>Click Start OAuth demo and show the complete Pinterest consent screen.</li><li>Approve access and return to Decor Areas Studio.</li><li>Open Analytics and show authorized organic metrics.</li><li>Connect Sandbox, prepare one Pin, explicitly confirm publishing and show the returned Pin ID.</li></ol><a class="primary link-button wide" href="/api/pinterest?action=oauth&env=production">Start OAuth demo</a></div>
+      <div class="panel policy"><strong>Review safeguards</strong><p>Decor Areas Studio requests only the permissions needed for the features shown here. Pinterest API data is fetched on demand for the authorized account and is not used for competitor research, benchmarking, cross-account aggregation, off-Pinterest advertising, or AI model training.</p><p>Trial write testing is limited to Pinterest Sandbox. Users explicitly select each item they publish, and production publishing is used only when Pinterest grants the required access.</p><p><a href="/privacy/">Privacy</a> · <a href="/security/">Security</a> · <a href="/data-deletion/">Data deletion & disconnection</a></p></div><div class="panel demo-panel"><h3>Reviewer demo sequence</h3><ol><li>Open this live app.</li><li>Click Start OAuth demo and show the complete Pinterest consent screen.</li><li>Approve access and return to Decor Areas Studio.</li><li>Open Analytics and show authorized organic metrics.</li><li>Connect Sandbox, prepare one Pin, explicitly confirm publishing and show the returned Pin ID.</li></ol><a class="primary link-button wide" href="/api/pinterest?action=oauth&env=production">Start OAuth demo</a></div>
     </section>
 
     <section class="page" id="page-settings">
@@ -90,7 +90,7 @@
         <article><div><strong>Scraping</strong><p>Not used.</p></div></article>
         <article><div><strong>Pinterest passwords</strong><p>Never collected.</p></div></article>
       </div>
-      <div class="panel legal-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/data-deletion/">Data deletion</a><a href="/security/">Security</a></div>
+      <div class="panel"><strong>Connection control</strong><p>Clear the Pinterest OAuth credentials stored by this browser. You can also revoke app authorization from Pinterest account settings.</p><button class="secondary" id="disconnectPinterest">Disconnect Pinterest from this browser</button></div><div class="panel legal-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/data-deletion/">Data deletion</a><a href="/security/">Security</a></div>
     </section>
   </main>
 </div>
