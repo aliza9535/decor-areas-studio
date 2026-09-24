@@ -43,7 +43,7 @@ export default async function handler(req,res){
   if(action==='oauth'){
     const id=process.env.PINTEREST_APP_ID;if(!id)return res.status(500).json({error:'PINTEREST_APP_ID is not configured'});
     const env=req.query.env==='sandbox'?'sandbox':'production',state=crypto.randomBytes(24).toString('hex'),redirect=redirectUri(req);
-    appendCookies(res,[authCookie('da_oauth_state',state,600),authCookie('da_oauth_env',env,600),authCookie('da_oauth_redirect',redirect,600)]);
+    appendCookies(res,[authCookie('da_oauth_state',state,600),authCookie('da_oauth_env',env,600),authCookie('da_oauth_redirect',redirect,600),...(req.query.recovery==='1'&&env==='production'?[authCookie('da_oauth_recovery','1',600)]:[])]);
     return res.redirect(302,'https://www.pinterest.com/oauth/?client_id='+encodeURIComponent(id)+'&redirect_uri='+encodeURIComponent(redirect)+'&response_type=code&scope='+encodeURIComponent(REQUIRED_SCOPE)+'&state='+encodeURIComponent(state));
   }
 
