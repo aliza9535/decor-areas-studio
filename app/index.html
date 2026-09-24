@@ -112,7 +112,14 @@
 
     <section class="page" id="page-blog">
       <div class="page-heading"><div><span class="eyebrow">BLOG → PIN</span><h1>Turn posts into reviewed Pin campaigns</h1><p>Connect a public WordPress site or import one article URL. Select a post, generate options, then choose exactly what to publish.</p></div></div>
-      <div class="blog-source-grid">
+      <article class="panel website-connect">
+  <div class="panel-head"><div><span class="kicker">WEBSITE CONNECTION</span><h2>Save a public WordPress site</h2></div><span class="status-chip" id="websiteStatus">Optional</span></div>
+  <p class="muted">For public published posts, no plugin, WordPress username, application password, or admin login is required. Enter the public site URL and confirm you own or are authorized to use its content. Private/draft WordPress content is not requested by this build.</p>
+  <div class="url-row"><input id="websiteConnectUrl" type="url" placeholder="https://yourwordpresssite.com"><button class="secondary" id="connectWebsite">Save website</button></div>
+  <label class="approval"><input type="checkbox" id="websiteConfirmed"><span>I own this site or am authorized to use its published content in Decor Areas Studio.</span></label>
+  <div id="websiteList" class="website-list"><div class="empty-state">No website saved yet.</div></div>
+</article>
+<div class="blog-source-grid">
         <article class="panel"><span class="kicker">WORDPRESS</span><h2>Load latest published posts</h2><p class="muted">Uses the public WordPress REST feed for the site you enter. No Pinterest scraping.</p><div class="url-row"><input id="wpSite" type="url" placeholder="https://yourwordpresssite.com"><button class="primary" id="loadWp">Load posts</button></div><div class="notice subtle" id="wpNotice">Up to 24 recent published posts will appear below.</div></article>
         <article class="panel"><span class="kicker">SINGLE ARTICLE</span><h2>Import one URL</h2><p class="muted">Reads the page title, description, canonical URL and Open Graph image.</p><div class="url-row"><input id="articleUrl" type="url" placeholder="https://your-site.com/post"><button class="secondary" id="importArticle">Import</button></div><div class="notice subtle" id="articleNotice">Use content you own or are authorized to publish.</div></article>
       </div>
