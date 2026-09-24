@@ -1,5 +1,5 @@
-import {getSessionUser} from './lib/auth.js';
-import {getFreshAccessToken,getPinterestAccount} from './lib/pinterest-store.js';
+import {getSessionUser} from '../server/auth.js';
+import {getFreshAccessToken,getPinterestAccount} from '../server/pinterest-store.js';
 import crypto from 'crypto';
 
 const PROD='https://api.pinterest.com/v5';
