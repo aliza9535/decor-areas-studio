@@ -52,3 +52,5 @@
 .owner-infra .integration-grid.compact{grid-template-columns:repeat(3,1fr)}
 @media(max-width:1100px){.analytics-metrics{grid-template-columns:repeat(3,1fr)}.owner-grid{grid-template-columns:1fr}.owner-infra .integration-grid.compact{grid-template-columns:1fr}.credit-cost-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.analytics-metrics{grid-template-columns:1fr 1fr}.ai-control-grid{grid-template-columns:1fr}.credit-cost-grid{grid-template-columns:1fr 1fr}.owner-users{overflow:auto}}
+
+.password-box{display:grid;gap:8px;border:1px solid var(--line);background:#fafbff;border-radius:12px;padding:10px;margin:10px 0}.password-box .secondary{justify-self:start}
