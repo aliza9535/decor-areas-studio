@@ -53,6 +53,16 @@
         </div>
       </div>
 
+      <div class="onboarding panel" id="onboardingPanel">
+        <div class="panel-head"><div><span class="kicker">GETTING STARTED</span><h2>Finish your workspace setup</h2></div><span class="status-chip" id="onboardingStatus">0 / 4 complete</span></div>
+        <div class="onboarding-grid">
+          <div class="onboarding-step"><span id="onboardAccount" class="step-dot"></span><div><strong>1. Create workspace</strong><small>Your account keeps schedules and connections separate.</small></div><button class="text-btn jump" data-page="settings">Account</button></div>
+          <div class="onboarding-step"><span id="onboardPinterest" class="step-dot"></span><div><strong>2. Connect Pinterest</strong><small>Authorize your own account with official OAuth.</small></div><a class="text-btn" href="/api/pinterest?action=oauth&env=production">Connect</a></div>
+          <div class="onboarding-step"><span id="onboardWebsite" class="step-dot"></span><div><strong>3. Add website</strong><small>Optional: save a public WordPress site and load posts.</small></div><button class="text-btn jump" data-page="blog">Add site</button></div>
+          <div class="onboarding-step"><span id="onboardFirstPin" class="step-dot"></span><div><strong>4. Create or schedule</strong><small>Review the exact Pin before publishing or queueing.</small></div><button class="text-btn jump" data-page="create">Create</button></div>
+        </div>
+      </div>
+
       <div class="metric-grid">
         <article class="metric-card"><span class="metric-icon">◉</span><div><small>Impressions</small><strong id="dashImpressions">—</strong><em>30 days</em></div></article>
         <article class="metric-card"><span class="metric-icon">♡</span><div><small>Saves</small><strong id="dashSaves">—</strong><em>30 days</em></div></article>
