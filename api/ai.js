@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import {getSessionUser,trustedPost} from './lib/auth.js';
 
 function clean(v,n=3000){return String(v||'').trim().slice(0,n)}
 function baseInput(b){
@@ -33,6 +34,9 @@ export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   if(req.method==='GET')return res.status(200).json({ok:true,textAI:!!process.env.OPENAI_API_KEY,imageAI:!!process.env.OPENAI_API_KEY,provider:process.env.OPENAI_API_KEY?'OpenAI':'Smart fallback'});
   if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
+  if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});
+  const user=await getSessionUser(req);
+  if(process.env.OPENAI_API_KEY&&!user)return res.status(401).json({error:'Sign in to use connected AI generation.'});
   const action=String(req.query.action||'text'),b=req.body||{};
   try{
     if(action==='image'){
