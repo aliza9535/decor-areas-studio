@@ -20,5 +20,5 @@ export default async function handler(req,res){
       }
     }catch(e){console.error('Pinterest account persistence failed',e)}
   }
-  res.redirect(302,'/?oauth='+(env==='sandbox'?'sandbox-connected':'connected'));
+  res.redirect(302,'/app/?oauth='+(env==='sandbox'?'sandbox-connected':'connected'));
 }
