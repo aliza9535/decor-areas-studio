@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import {getSessionUser} from './lib/auth.js';
+import {getPinterestAccount,getFreshAccessToken,deletePinterestAccount} from './lib/pinterest-store.js';
 
 const PROD='https://api.pinterest.com/v5';
 const SANDBOX='https://api-sandbox.pinterest.com/v5';
@@ -22,20 +24,27 @@ async function parse(r){let d={};try{d=await r.json()}catch{};return d}
 function fail(out,res,fallback='Pinterest API request failed'){return res.status(out.status||502).json({ok:false,error:out.data?.message||out.data?.error||fallback})}
 
 async function refreshAccess(req,res,env){const c=cookies(req),names=authNames(env),refresh=unseal(c[names.refresh]),id=process.env.PINTEREST_APP_ID,secret=process.env.PINTEREST_APP_SECRET;if(!refresh||!id||!secret)return null;const r=await fetch(oauthEndpoint(env),{method:'POST',headers:{Authorization:'Basic '+Buffer.from(id+':'+secret).toString('base64'),'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh})});const d=await parse(r);if(!r.ok||!d.access_token)return null;const lines=[authCookie(names.access,seal(d.access_token,secret),d.expires_in||2592000)];if(d.refresh_token)lines.push(authCookie(names.refresh,seal(d.refresh_token,secret),d.refresh_token_expires_in||5184000));appendCookies(res,lines);return d.access_token}
-async function token(req,res,env){const c=cookies(req),names=authNames(env),access=unseal(c[names.access]);if(access)return access;return refreshAccess(req,res,env)}
-async function pinterest(req,res,env,path,opt={}){let t=await token(req,res,env);if(!t)return{ok:false,status:401,data:{message:'Pinterest OAuth is not connected'}};const run=async tok=>{const r=await fetch(base(env)+path,{...opt,headers:{Authorization:'Bearer '+tok,Accept:'application/json',...(opt.headers||{})}});return{ok:r.ok,status:r.status,data:await parse(r)}};let out=await run(t);if(out.status===401){const next=await refreshAccess(req,res,env);if(next)out=await run(next)}return out}
+async function storedToken(req,env){if(env!=='production')return null;try{const user=await getSessionUser(req);return user?await getFreshAccessToken(user.id):null}catch{return null}}
+async function token(req,res,env){const c=cookies(req),names=authNames(env),access=unseal(c[names.access]);if(access)return access;const refreshed=await refreshAccess(req,res,env);return refreshed||storedToken(req,env)}
+async function pinterest(req,res,env,path,opt={}){let t=await token(req,res,env);if(!t)return{ok:false,status:401,data:{message:'Pinterest OAuth is not connected'}};const run=async tok=>{const r=await fetch(base(env)+path,{...opt,headers:{Authorization:'Bearer '+tok,Accept:'application/json',...(opt.headers||{})}});return{ok:r.ok,status:r.status,data:await parse(r)}};let out=await run(t);if(out.status===401){let next=await refreshAccess(req,res,env);if(!next)next=await storedToken(req,env);if(next)out=await run(next)}return out}
 function validHttpUrl(value){if(!value)return true;try{const u=new URL(value);return u.protocol==='https:'||u.protocol==='http:'}catch{return false}}
 
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   const action=String(req.query.action||''),c=cookies(req);
 
-  if(action==='status')return res.status(200).json({ok:true,standardAccess:true,productionConnected:!!(c.da_access||c.da_refresh),sandboxConnected:!!(c.da_sandbox_access||c.da_sandbox_refresh),appConfigured:!!process.env.PINTEREST_APP_ID&&!!process.env.PINTEREST_APP_SECRET});
+  if(action==='status'){let stored=false;try{const user=await getSessionUser(req);stored=!!(user&&await getPinterestAccount(user.id))}catch{}return res.status(200).json({ok:true,standardAccess:true,productionConnected:!!(c.da_access||c.da_refresh||stored),workspacePinterestConnected:stored,sandboxConnected:!!(c.da_sandbox_access||c.da_sandbox_refresh),appConfigured:!!process.env.PINTEREST_APP_ID&&!!process.env.PINTEREST_APP_SECRET});}
 
   if(action==='disconnect'){
     if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});
     appendCookies(res,['da_access','da_refresh','da_sandbox_access','da_sandbox_refresh','da_oauth_state','da_oauth_env','da_oauth_redirect'].map(clearCookie));
     return res.status(200).json({ok:true});
+  }
+
+  if(action==='disconnect-workspace'){
+    if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});
+    const user=await getSessionUser(req);if(!user)return res.status(401).json({error:'Sign in first.'});
+    await deletePinterestAccount(user.id);appendCookies(res,['da_access','da_refresh'].map(clearCookie));return res.status(200).json({ok:true});
   }
 
   if(action==='oauth'){
@@ -70,7 +79,7 @@ export default async function handler(req,res){
 
   if(action==='analytics'){
     const end=new Date(),start=new Date(Date.now()-29*86400000),ymd=d=>d.toISOString().slice(0,10),common='start_date='+ymd(start)+'&end_date='+ymd(end)+'&from_claimed_content=BOTH&pin_format=ALL&app_types=ALL&content_type=ALL&source=ALL';
-    const a=await pinterest(req,res,'production','/user_account/analytics?'+common+'&split_field=NO_SPLIT');if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');const tp=await pinterest(req,res,'production','/user_account/analytics/top_pins?'+common+'&sort_by=IMPRESSION&metric_types=IMPRESSION,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT&num_of_pins=10');const first=Object.values(a.data||{}).find(v=>v&&typeof v==='object'&&v.summary_metrics)||{};return res.status(200).json({ok:true,summary:first.summary_metrics||{},topPins:tp.ok?(tp.data?.pins||[]):[]});
+    const a=await pinterest(req,res,'production','/user_account/analytics?'+common+'&split_field=NO_SPLIT');if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');const tp=await pinterest(req,res,'production','/user_account/analytics/top_pins?'+common+'&sort_by=IMPRESSION&metric_types=IMPRESSION,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT&num_of_pins=10');const first=Object.values(a.data||{}).find(v=>v&&typeof v==='object'&&(v.summary_metrics||v.daily_metrics))||{};return res.status(200).json({ok:true,summary:first.summary_metrics||{},series:Array.isArray(first.daily_metrics)?first.daily_metrics:[],topPins:tp.ok?(tp.data?.pins||[]):[]});
   }
 
   if(action==='sandbox-setup'){
@@ -81,8 +90,8 @@ export default async function handler(req,res){
   }
 
   if(action==='create'){
-    if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});const body=req.body||{},env=body.sandbox===true?'sandbox':'production',title=String(body.title||'').trim(),destination=String(body.destination||'').trim();if(!body.board_id||!title)return res.status(400).json({error:'Board and title are required'});if(!body.image_base64)return res.status(400).json({error:'Choose or design an image'});if(destination&&!validHttpUrl(destination))return res.status(400).json({error:'Destination URL must start with http:// or https://'});
-    const media_source={source_type:'image_base64',content_type:String(body.content_type||'image/jpeg'),data:String(body.image_base64),is_standard:true},payload={board_id:String(body.board_id),title:title.slice(0,100),description:String(body.description||'').slice(0,800),alt_text:String(body.alt_text||'').slice(0,500),media_source};if(destination)payload.link=destination;
+    if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});const body=req.body||{},env=body.sandbox===true?'sandbox':'production',title=String(body.title||'').trim(),destination=String(body.destination||'').trim();if(!body.board_id||!title)return res.status(400).json({error:'Board and title are required'});if(!body.image_base64&&!body.image_url)return res.status(400).json({error:'Choose, design or import an image'});if(destination&&!validHttpUrl(destination))return res.status(400).json({error:'Destination URL must start with http:// or https://'});if(body.image_url&&!validHttpUrl(body.image_url))return res.status(400).json({error:'Hosted image URL must start with http:// or https://'});
+    const media_source=body.image_url?{source_type:'image_url',url:String(body.image_url),is_standard:true}:{source_type:'image_base64',content_type:String(body.content_type||'image/jpeg'),data:String(body.image_base64),is_standard:true},payload={board_id:String(body.board_id),title:title.slice(0,100),description:String(body.description||'').slice(0,800),alt_text:String(body.alt_text||'').slice(0,500),media_source};if(destination)payload.link=destination;
     const out=await pinterest(req,res,env,'/pins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!out.ok)return fail(out,res,'Pinterest rejected the publishing request');return res.status(201).json({ok:true,pin:out.data,environment:env});
   }
 
