@@ -26,3 +26,6 @@ Production Pinterest publishing and organic analytics workspace using Pinterest 
 
 ## Next infrastructure milestone
 A reliable unattended scheduler, multi-user account system, team collaboration and billing require a durable server datastore plus background jobs. Those features are intentionally not faked with browser-only timers.
+
+
+<!-- deployment: workflow-ui-2026-09-24 -->
