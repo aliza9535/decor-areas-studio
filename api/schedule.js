@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import {getDb,ensureSchema,dbConfigured} from './lib/db.js';
 import {getSessionUser,trustedPost} from './lib/auth.js';
+import {publishStoredPin} from './lib/pinterest-store.js';
 
 const LIMITS={free:25,starter:250,pro:1000,agency:5000};
 function safe(v,n){return String(v||'').trim().slice(0,n)}
@@ -18,13 +19,23 @@ export default async function handler(req,res){
   if(!user)return res.status(401).json({error:'Create an account or sign in to use the scheduler.'});
   const sql=getDb();
   if(req.method==='GET'){
-    const items=await sql`select id,board_id,board_name,title,description,destination,alt_text,image_url,content_type,file_name,scheduled_at,status,pinterest_pin_id,last_error,published_at,created_at
+    const items=await sql`select id,board_id,board_name,title,description,destination,alt_text,image_url,image_thumb,content_type,file_name,scheduled_at,status,pinterest_pin_id,last_error,published_at,created_at
       from scheduled_pins where user_id=${user.id} order by scheduled_at desc limit 1000`;
     return res.status(200).json({ok:true,items,gapMinutes:30,plan:user.plan,limit:LIMITS[user.plan]||LIMITS.free});
   }
   if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});
   if(req.method==='POST'){
-    const b=req.body||{},when=new Date(b.scheduled_at);
+    const b=req.body||{};
+    if(String(req.query.action||'')==='run-due'){
+      const due=await sql`select * from scheduled_pins where user_id=${user.id} and status='scheduled' and approved_at is not null and scheduled_at<=now() order by scheduled_at asc limit 10`,results=[];
+      for(const pin of due){
+        const claim=await sql`update scheduled_pins set status='publishing' where id=${pin.id} and user_id=${user.id} and status='scheduled' returning id`;if(!claim.length)continue;
+        try{const created=await publishStoredPin(user.id,pin);await sql`update scheduled_pins set status='published',pinterest_pin_id=${created.id||null},published_at=now(),last_error=null where id=${pin.id}`;results.push({id:pin.id,status:'published',pinId:created.id||null})}
+        catch(e){await sql`update scheduled_pins set status='failed',last_error=${String(e.message||e).slice(0,1000)} where id=${pin.id}`;results.push({id:pin.id,status:'failed',error:String(e.message||e)})}
+      }
+      return res.status(200).json({ok:true,processed:results.length,results});
+    }
+    const when=new Date(b.scheduled_at);
     if(b.approved!==true)return res.status(400).json({error:'Review and explicitly approve this exact Pin before scheduling it.'});
     if(!b.board_id||!safe(b.title,100))return res.status(400).json({error:'Board and title are required.'});
     if(Number.isNaN(when.getTime())||when.getTime()<Date.now()+5*60000)return res.status(400).json({error:'Choose a publishing time at least 5 minutes in the future.'});
@@ -34,9 +45,9 @@ export default async function handler(req,res){
     if(count>=cap)return res.status(403).json({error:'Your current plan queue is full.'});
     const hit=await conflict(sql,user.id,when);if(hit)return res.status(409).json({error:'Scheduled Pins must be at least 30 minutes apart.',conflict:hit});
     const id=crypto.randomUUID();
-    await sql`insert into scheduled_pins(id,user_id,board_id,board_name,title,description,destination,alt_text,image_data,image_url,content_type,file_name,scheduled_at,approved_at,status)
+    await sql`insert into scheduled_pins(id,user_id,board_id,board_name,title,description,destination,alt_text,image_data,image_url,image_thumb,content_type,file_name,scheduled_at,approved_at,status)
       values(${id},${user.id},${safe(b.board_id,128)},${safe(b.board_name,160)||null},${safe(b.title,100)},${safe(b.description,800)||null},${safe(b.destination,2000)||null},
-      ${safe(b.alt_text,500)||null},${b.image_data?String(b.image_data):null},${safe(b.image_url,3000)||null},${safe(b.content_type,80)||'image/jpeg'},${safe(b.file_name,180)||null},${when},now(),'scheduled')`;
+      ${safe(b.alt_text,500)||null},${b.image_data?String(b.image_data):null},${safe(b.image_url,3000)||null},${b.image_thumb?String(b.image_thumb).slice(0,350000):null},${safe(b.content_type,80)||'image/jpeg'},${safe(b.file_name,180)||null},${when},now(),'scheduled')`;
     return res.status(201).json({ok:true,id,scheduled_at:when.toISOString(),gapMinutes:30});
   }
   if(req.method==='PATCH'){
