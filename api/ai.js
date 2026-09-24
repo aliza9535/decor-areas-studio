@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import crypto from 'crypto';
-import {getSessionUser,trustedPost} from './lib/auth.js';
-import {getDb,ensureSchema,dbConfigured} from './lib/db.js';
-import {getOpenAIConfig,getSetting} from './lib/settings.js';
+import {getSessionUser,trustedPost} from '../server/auth.js';
+import {getDb,ensureSchema,dbConfigured} from '../server/db.js';
+import {getOpenAIConfig,getSetting} from '../server/settings.js';
 
 function clean(v,n=3000){return String(v||'').trim().slice(0,n)}
 function baseInput(b){
