@@ -3,7 +3,7 @@ import crypto from 'crypto';
 const PROD='https://api.pinterest.com/v5';
 const SANDBOX='https://api-sandbox.pinterest.com/v5';
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.indexOf('=');return i<0?[x,'']:[decodeURIComponent(x.slice(0,i)),decodeURIComponent(x.slice(i+1))]}))}
-function origin(req){if(process.env.APP_ORIGIN)return process.env.APP_ORIGIN.replace(/\/$/,'');const host=req.headers['x-forwarded-host']||req.headers.host;const proto=req.headers['x-forwarded-proto']||'https';return proto+'://'+host}
+function origin(req){const host=req.headers['x-forwarded-host']||req.headers.host;const proto=req.headers['x-forwarded-proto']||'https';if(process.env.VERCEL_ENV==='preview')return proto+'://'+host;if(process.env.APP_ORIGIN)return process.env.APP_ORIGIN.replace(/\/$/,'');return proto+'://'+host}
 function redirectUri(req){return origin(req)+'/api/auth/pinterest/callback'}
 async function get(url,token){const r=await fetch(url,{headers:{Authorization:'Bearer '+token,Accept:'application/json'}});let d={};try{d=await r.json()}catch{};return{ok:r.ok,status:r.status,data:d}}
 function fail(out,res,fallback='Pinterest API request failed'){return res.status(out.status||502).json({ok:false,error:out.data?.message||out.data?.error||fallback})}
