@@ -20,6 +20,37 @@ export async function ensureSchema(){
     plan text not null default 'free',
     stripe_customer_id text,
     stripe_subscription_id text,
+    role text not null default 'user',
+    ai_credits integer not null default 25,
+    email_verified_at timestamptz,
+    created_at timestamptz not null default now()
+  )`;
+  await sql`alter table app_users add column if not exists role text not null default 'user'`;
+  await sql`alter table app_users add column if not exists ai_credits integer not null default 25`;
+  await sql`alter table app_users add column if not exists email_verified_at timestamptz`;
+  await sql`update app_users set email_verified_at=created_at where email_verified_at is null and created_at < now() - interval '1 minute'`;
+  await sql`update app_users set role='owner',ai_credits=greatest(ai_credits,1000)
+    where id=(select id from app_users order by created_at asc limit 1)
+    and not exists(select 1 from app_users where role='owner')`;
+  await sql`create table if not exists app_settings (
+    key text primary key,
+    value text,
+    sensitive boolean not null default false,
+    updated_at timestamptz not null default now()
+  )`;
+  await sql`create table if not exists email_verifications (
+    id text primary key,
+    user_id text not null references app_users(id) on delete cascade,
+    token_hash text unique not null,
+    expires_at timestamptz not null,
+    created_at timestamptz not null default now()
+  )`;
+  await sql`create index if not exists email_verifications_token_idx on email_verifications(token_hash)`;
+  await sql`create table if not exists credit_ledger (
+    id text primary key,
+    user_id text not null references app_users(id) on delete cascade,
+    delta integer not null,
+    reason text,
     created_at timestamptz not null default now()
   )`;
   await sql`create table if not exists app_sessions (
