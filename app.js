@@ -93,18 +93,65 @@ async function loadAnalytics(force=false){
   try{const d=await api('/api/pinterest?action=analytics');state.analytics=d;renderAnalytics(d);n.className='notice success';n.textContent='Live organic analytics loaded for the authorized Pinterest account.';$('#checkAnalytics').className='check good';$('#checkAnalyticsText').textContent='Authorized metrics working';return true}
   catch(e){n.className='notice';n.textContent='Connect Pinterest to load authorized organic analytics.';$('#checkAnalytics').className='check';$('#checkAnalyticsText').textContent='Awaiting connection';return false}
 }
+function pinImage(p){
+  const imgs=p?.media?.images||p?.media_source?.images||{};
+  const preferred=imgs?.['1200x']||imgs?.['600x']||imgs?.['400x300']||imgs?.['150x150']||Object.values(imgs).find(v=>v&&v.url);
+  return p?.image?.url||preferred?.url||'';
+}
+function pinTitle(p,id){return String(p?.title||p?.description||('Pin '+String(id||'').slice(-6))||'Pinterest Pin').trim()}
+function metricValue(metrics,key){
+  if(!metrics)return null;
+  const aliases=[key,key.toLowerCase(),key.toLowerCase().replaceAll('_','')];
+  const direct=aliases.map(k=>metrics?.[k]).find(v=>v!==undefined&&v!==null);
+  if(direct!==undefined)return Number(direct||0);
+  for(const v of Object.values(metrics||{})){
+    if(v&&typeof v==='object'){
+      const nested=metricValue(v,key);
+      if(nested!==null)return nested;
+    }
+  }
+  return null;
+}
+function statCell(label,value){return '<div class="pin-stat"><small>'+label+'</small><strong>'+(value===null?'—':compact(value))+'</strong></div>'}
+function renderTopPinCards(items){
+  const el=$('#performanceGallery');if(!el)return;
+  el.innerHTML=(items||[]).map((row,i)=>{
+    const pin=row.pin||{},id=row.pin_id||pin.id||'',img=pinImage(pin),m=row.metrics||{};
+    const href=id?'https://www.pinterest.com/pin/'+encodeURIComponent(id)+'/':'';
+    return '<article class="performance-card">'
+      +'<div class="performance-image" '+(img?'style="background-image:url(&quot;'+esc(img)+'&quot;)"':'')+'><span class="rank-chip">#'+(i+1)+'</span></div>'
+      +'<div class="performance-copy"><div class="performance-title"><div><strong>'+esc(pinTitle(pin,id))+'</strong><small>'+esc(pin?.board_owner?.username?'@'+pin.board_owner.username:'Organic Pin')+'</small></div>'+(href?'<a href="'+href+'" target="_blank" rel="noopener">View ↗</a>':'')+'</div>'
+      +'<div class="pin-stats">'+statCell('Impressions',metricValue(m,'IMPRESSION'))+statCell('Saves',metricValue(m,'SAVE'))+statCell('Pin clicks',metricValue(m,'PIN_CLICK'))+statCell('Outbound',metricValue(m,'OUTBOUND_CLICK'))+'</div>'
+      +'<div class="pin-meta"><span>Pin '+esc(String(id).slice(-10))+'</span>'+(pin?.created_at?'<span>'+esc(new Date(pin.created_at).toLocaleDateString())+'</span>':'')+'</div></div></article>';
+  }).join('')||'<div class="empty-state">Pinterest returned no Top Pins for this date range.</div>';
+}
 function renderAnalytics(d){
   const m=d.summary||{};const vals={imp:metricFrom(m,'IMPRESSION'),save:metricFrom(m,'SAVE'),click:metricFrom(m,'PIN_CLICK'),out:metricFrom(m,'OUTBOUND_CLICK')};
   $('#metricImpressions').textContent=$('#dashImpressions').textContent=compact(vals.imp);$('#metricSaves').textContent=$('#dashSaves').textContent=compact(vals.save);$('#metricClicks').textContent=compact(vals.click);$('#metricOutbound').textContent=$('#dashOutbound').textContent=compact(vals.out);$('#heroImpressions').textContent=compact(vals.imp);
-  $('#topPins').innerHTML=(d.topPins||[]).map(p=>'<tr><td>'+esc(p.pin_id||'—')+'</td><td>'+compact(p.metrics?.IMPRESSION)+'</td><td>'+compact(p.metrics?.SAVE)+'</td><td>'+compact(p.metrics?.PIN_CLICK)+'</td><td>'+compact(p.metrics?.OUTBOUND_CLICK)+'</td></tr>').join('')||'<tr><td colspan="5">Pinterest returned no Top Pins for this date range.</td></tr>';
+  renderTopPinCards(d.topPins||[]);
   drawLine($('#trendChart'),d.series,$('#trendEmpty'));drawLine($('#analyticsChart'),d.series,$('#analyticsTrendEmpty'));
 }
 $('#refreshAnalytics').onclick=()=>loadAnalytics(true);$('#refreshDashboard').onclick=async()=>{state.analytics=null;await loadAnalytics(true);await loadSchedule()};
 
-function pinImage(p){const imgs=p?.media?.images||p?.media_source?.images||{};const first=Object.values(imgs).find(v=>v&&v.url);return p?.image?.url||first?.url||p?.media?.images?.originals?.url||''}
+function recentMetrics(p){
+  const pm=p?.pin_metrics||{};
+  const preferred=pm?.['90d']||pm?.['30d']||pm?.lifetime_metrics||pm?.lifetime||pm;
+  return {
+    impressions:metricValue(preferred,'IMPRESSION'),
+    saves:metricValue(preferred,'SAVE'),
+    clicks:metricValue(preferred,'PIN_CLICK'),
+    outbound:metricValue(preferred,'OUTBOUND_CLICK')
+  };
+}
 async function loadPins(){
   if(!state.productionConnected)return;
-  try{const d=await api('/api/pinterest?action=pins');state.pins=d.pins||[];$('#pinGallery').innerHTML=state.pins.slice(0,9).map(p=>'<div class="pin-tile" style="'+(pinImage(p)?'background-image:url(&quot;'+esc(pinImage(p))+'&quot;)':'')+'"><span>'+esc(String(p.title||p.id||'Pin').slice(0,28))+'</span></div>').join('')||'<div class="empty-state">No recent Pins returned.</div>'}catch{}
+  try{
+    const d=await api('/api/pinterest?action=pins');state.pins=d.pins||[];
+    $('#pinGallery').innerHTML=state.pins.slice(0,12).map(p=>{
+      const img=pinImage(p),m=recentMetrics(p),href=p.id?'https://www.pinterest.com/pin/'+encodeURIComponent(p.id)+'/':'';
+      return '<article class="recent-pin-card"><div class="recent-pin-image" '+(img?'style="background-image:url(&quot;'+esc(img)+'&quot;)"':'')+'></div><div class="recent-pin-copy"><strong>'+esc(pinTitle(p,p.id))+'</strong><div class="recent-pin-stats"><span><b>'+(m.impressions===null?'—':compact(m.impressions))+'</b> impressions</span><span><b>'+(m.saves===null?'—':compact(m.saves))+'</b> saves</span><span><b>'+(m.clicks===null?'—':compact(m.clicks))+'</b> clicks</span><span><b>'+(m.outbound===null?'—':compact(m.outbound))+'</b> outbound</span></div>'+(href?'<a href="'+href+'" target="_blank" rel="noopener">Open Pin ↗</a>':'')+'</div></article>';
+    }).join('')||'<div class="empty-state">No recent Pins returned.</div>';
+  }catch(e){$('#pinGallery').innerHTML='<div class="empty-state">'+esc(e.message||'Could not load recent Pins.')+'</div>'}
 }
 
 $('#title').oninput=()=>{$('#previewTitle').textContent=$('#title').value||'Your Pin title';$('#titleCount').textContent=$('#title').value.length+' / 100'};
