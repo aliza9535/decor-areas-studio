@@ -1,7 +1,7 @@
 import crypto from 'crypto';
-import {getDb,ensureSchema,dbConfigured} from '../lib/db.js';
-import {hashPassword,verifyPassword,createSession,getSessionUser,destroySession,sessionCookie,trustedPost,appOrigin} from '../lib/auth.js';
-import {getEmailConfig} from '../lib/settings.js';
+import {getDb,ensureSchema,dbConfigured} from '../../server/db.js';
+import {hashPassword,verifyPassword,createSession,getSessionUser,destroySession,sessionCookie,trustedPost,appOrigin} from '../../server/auth.js';
+import {getEmailConfig} from '../../server/settings.js';
 
 function cleanEmail(v){return String(v||'').trim().toLowerCase()}
 function publicUser(u){return u?{id:u.id,email:u.email,plan:u.plan,role:u.role||'user',ai_credits:Number(u.ai_credits||0),email_verified:!!u.email_verified_at}:null}
