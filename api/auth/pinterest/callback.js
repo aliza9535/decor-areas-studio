@@ -3,7 +3,7 @@ import {getSessionUser} from '../../lib/auth.js';
 import {upsertPinterestAccount} from '../../lib/pinterest-store.js';
 
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.indexOf('=');return i<0?[x,'']:[decodeURIComponent(x.slice(0,i)),decodeURIComponent(x.slice(i+1))]}))}
-function origin(req){if(process.env.APP_ORIGIN)return process.env.APP_ORIGIN.replace(/\/$/,'');const host=req.headers['x-forwarded-host']||req.headers.host;const proto=req.headers['x-forwarded-proto']||'https';return proto+'://'+host}
+function origin(req){const host=req.headers['x-forwarded-host']||req.headers.host;const proto=req.headers['x-forwarded-proto']||'https';if(process.env.VERCEL_ENV==='preview')return proto+'://'+host;if(process.env.APP_ORIGIN)return process.env.APP_ORIGIN.replace(/\/$/,'');return proto+'://'+host}
 function seal(value,secret){const key=crypto.createHash('sha256').update(secret).digest(),iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',key,iv);const enc=Buffer.concat([cipher.update(String(value),'utf8'),cipher.final()]),tag=cipher.getAuthTag();return ['v1',iv.toString('base64url'),tag.toString('base64url'),enc.toString('base64url')].join('.')}
 
 export default async function handler(req,res){
