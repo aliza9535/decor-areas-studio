@@ -22,7 +22,7 @@ function post(url,body,timeout=20000){return api(url,{method:'POST',headers:{'Co
 function setBusy(button,busy,label){if(!button)return;button.disabled=!!busy;button.classList.toggle('is-busy',!!busy);if(label!=null){if(busy){button.dataset.idleText=button.textContent;button.textContent=label}else if(button.dataset.idleText){button.textContent=button.dataset.idleText;delete button.dataset.idleText}}}
 function show(name){
   if(name==='admin'&&state.user?.role!=='owner'){toast('Owner access required');name='dashboard'}
-  $('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===name));$('.page').forEach(p=>p.classList.remove('active'));$('#page-'+name)?.classList.add('active');
+  document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===name));document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$('#page-'+name)?.classList.add('active');
   const m=PAGE_META[name]||[name,''];$('#pageTitle').textContent=m[0];$('#pageSubtitle').textContent=m[1];$('.sidebar')?.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});
   if(name==='dashboard')loadDashboardPinterest();
   if(name==='create')loadBoards();
