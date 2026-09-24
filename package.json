@@ -1,10 +1,10 @@
 {
-  "name":"decor-areas-studio",
-  "private":true,
-  "version":"3.0.0",
-  "dependencies":{
-    "openai":"^6.0.0",
-    "postgres":"^3.4.7",
-    "stripe":"^18.5.0"
+  "name": "decor-areas-studio",
+  "private": true,
+  "version": "3.0.0",
+  "dependencies": {
+    "openai": "^7.23.0",
+    "postgres": "^3.4.7",
+    "stripe": "^18.5.0"
   }
 }
