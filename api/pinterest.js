@@ -52,7 +52,7 @@ export default async function handler(req,res){
 
   if(action==='pins'){
     const token=prodToken(req);if(!token)return res.status(401).json({error:'Pinterest OAuth is not connected'});
-    const r=await get(PROD+'/pins?page_size=25&pin_metrics=true',token);if(!r.ok)return fail(r,res,'Could not load Pins');
+    const r=await get(PROD+'/pins?page_size=50&pin_metrics=true',token);if(!r.ok)return fail(r,res,'Could not load Pins');
     return res.status(200).json({ok:true,pins:r.data?.items||[]});
   }
 
@@ -66,7 +66,14 @@ export default async function handler(req,res){
     ]);
     if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');
     const first=Object.values(a.data||{}).find(v=>v&&typeof v==='object'&&(v.summary_metrics||v.daily_metrics))||{};
-    return res.status(200).json({ok:true,summary:first.summary_metrics||{},series:first.daily_metrics||[],topPins:tp.ok?(tp.data?.pins||[]):[]});
+    const topPins=tp.ok?(tp.data?.pins||[]):[];
+    const topPinsWithDetails=await Promise.all(topPins.map(async row=>{
+      const pinId=String(row?.pin_id||row?.id||'');
+      if(!pinId)return row;
+      const detail=await get(PROD+'/pins/'+encodeURIComponent(pinId)+'?pin_metrics=true',token);
+      return detail.ok?{...row,pin:detail.data}:row;
+    }));
+    return res.status(200).json({ok:true,summary:first.summary_metrics||{},series:first.daily_metrics||[],topPins:topPinsWithDetails});
   }
 
   if(action==='sandbox-setup'){
