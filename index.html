@@ -109,15 +109,13 @@
         <div class="panel-head"><div><span class="kicker">ORGANIC TREND</span><h2>Performance over time</h2></div><small>Last 30 days</small></div>
         <div class="chart-wrap"><canvas id="analyticsChart" height="280"></canvas><div class="chart-empty" id="analyticsTrendEmpty">Daily trend data will appear here.</div></div>
       </div>
-      <div class="analytics-grid">
-        <div class="panel">
-          <div class="panel-head"><div><span class="kicker">TOP CONTENT</span><h2>Top Pins</h2></div><small>By impressions</small></div>
-          <div class="table-wrap"><table><thead><tr><th>Pin ID</th><th>Impressions</th><th>Saves</th><th>Pin clicks</th><th>Outbound</th></tr></thead><tbody id="topPins"><tr><td colspan="5">Connect Pinterest to load analytics.</td></tr></tbody></table></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><div><span class="kicker">VISUAL LIBRARY</span><h2>Recent Pins</h2></div></div>
-          <div class="pin-gallery" id="pinGallery"><div class="empty-state">Recent Pin previews will appear here.</div></div>
-        </div>
+      <div class="panel performance-panel">
+        <div class="panel-head"><div><span class="kicker">TOP CONTENT</span><h2>Top Pin performance</h2></div><small>Images + 30-day organic metrics</small></div>
+        <div class="performance-gallery" id="performanceGallery"><div class="empty-state">Connect Pinterest to see Pin images with their performance.</div></div>
+      </div>
+      <div class="panel recent-panel">
+        <div class="panel-head"><div><span class="kicker">VISUAL LIBRARY</span><h2>Recent Pins</h2></div><small>Pin metadata + available stats</small></div>
+        <div class="recent-pin-grid" id="pinGallery"><div class="empty-state">Recent Pin previews will appear here.</div></div>
       </div>
     </section>
 
