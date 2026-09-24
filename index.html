@@ -15,7 +15,7 @@
       <button class="nav active" data-page="home">Overview</button>
       <button class="nav" data-page="analytics">Analytics</button>
       <button class="nav" data-page="create">Create</button>
-      <button class="nav" data-page="demo">API Demo</button>
+      <button class="nav" data-page="demo">API Status</button>
       <button class="nav" data-page="settings">Settings</button>
     </nav>
     <div class="connection"><span id="connectionDot"></span><div><strong>Pinterest API</strong><small id="connectionText">Not connected</small></div></div>
@@ -50,26 +50,27 @@
     </section>
 
     <section class="page" id="page-create">
-      <div class="eyebrow">USER-APPROVED PUBLISHING</div><h1>Create</h1><p class="lead">Prepare one Pin and explicitly confirm the publishing action. Trial write testing uses Pinterest Sandbox.</p>
-      <div class="sandbox"><div><span class="sandbox-label">SANDBOX</span><strong>Trial write testing</strong><p>Sandbox content is used to demonstrate the integration without affecting production publishing.</p></div><a class="primary link-button" id="sandboxConnect" href="/api/pinterest?action=oauth&env=sandbox">Connect Sandbox</a></div>
-      <div class="notice" id="sandboxNotice">Sandbox authorization is available after Pinterest Trial access is approved.</div>
+      <div class="eyebrow">STANDARD ACCESS · USER-APPROVED PUBLISHING</div><h1>Create</h1><p class="lead">Create a Pin for the Pinterest account you explicitly connected. Every production publish requires your confirmation.</p>
+      <div class="production-card"><div><span class="production-label">PRODUCTION</span><strong>Standard publishing</strong><p>Uses Pinterest OAuth and publishes only the individual Pin you review and confirm.</p></div><a class="primary link-button" id="productionConnect" href="/api/pinterest?action=oauth&env=production">Connect Pinterest</a></div>
+      <div class="notice" id="createNotice">Connect Pinterest to load your Boards and publish.</div>
       <div class="create-grid">
         <div class="panel form">
-          <label>Board<select id="board"><option value="">Connect Sandbox first…</option></select></label>
+          <label>Board<select id="board"><option value="">Connect Pinterest first…</option></select></label>
           <label>Title<input id="title" maxlength="100" placeholder="Example: Small bedroom storage ideas"></label>
           <label>Description<textarea id="description" rows="5" placeholder="Describe the content"></textarea></label>
-          <label>Destination URL<input id="destination" type="url" placeholder="https://example.com/article"></label>
+          <label>Destination URL<input id="destination" type="url" placeholder="https://your-site.com/article"></label>
           <label>Image<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
-          <label>Alt text<input id="altText" maxlength="500" placeholder="Describe the image"></label>
-          <button class="primary" id="publish" disabled>Publish this Sandbox Pin</button>
+          <label>Alt text<input id="altText" maxlength="500" placeholder="Describe the image for accessibility"></label>
+          <button class="primary" id="publish" disabled>Publish this Pin to Pinterest</button>
           <div class="notice" id="publishNotice">Nothing will be published without your explicit confirmation.</div>
         </div>
         <div class="panel"><strong>Preview</strong><div class="preview" id="preview">Image preview</div><h3 id="previewTitle">Your title</h3><p id="previewDescription">Your description will appear here.</p></div>
       </div>
+      <div class="panel sandbox-tools"><strong>Sandbox testing</strong><p>Sandbox remains available for safe API testing without affecting production content.</p><a class="secondary link-button" href="/api/pinterest?action=oauth&env=sandbox">Connect Sandbox</a></div>
     </section>
 
     <section class="page" id="page-demo">
-      <div class="eyebrow">PINTEREST API ACCESS</div><h1>API Demo</h1><p class="lead">A reviewer-focused demonstration of official OAuth, authorized analytics and user-approved publishing.</p>
+      <div class="eyebrow">PINTEREST API ACCESS</div><h1>API Status</h1><p class="lead">Production OAuth, authorized analytics and user-approved publishing under Standard access.</p>
       <div class="notice success"><strong>Use case:</strong> content marketing, creative and measurement for creators and businesses who explicitly connect their own Pinterest accounts.</div>
       <div class="compliance"><span>Official OAuth</span><span>Authorized account data</span><span>User approves each Pin</span><span>No Pinterest passwords</span><span>No Pinterest session cookies</span><span>No scraping</span><span>API data fetched on demand</span><span>No cross-account aggregation</span><span>No AI training with Pinterest data</span><span>Independent branding</span></div>
       <div class="checks">
@@ -79,7 +80,7 @@
         <article><span class="check" id="checkAnalytics"></span><div><strong>Analytics</strong><small id="checkAnalyticsText">Awaiting connection</small></div></article>
         <article><span class="check" id="checkSandbox"></span><div><strong>Sandbox</strong><small id="checkSandboxText">Awaiting connection</small></div></article>
       </div>
-      <div class="panel policy"><strong>Review safeguards</strong><p>Decor Areas Studio requests only the permissions needed for the features shown here. Pinterest API data is fetched on demand for the authorized account and is not used for competitor research, benchmarking, cross-account aggregation, off-Pinterest advertising, or AI model training.</p><p>Trial write testing is limited to Pinterest Sandbox. Users explicitly select each item they publish, and production publishing is used only when Pinterest grants the required access.</p><p><a href="/privacy/">Privacy</a> · <a href="/security/">Security</a> · <a href="/data-deletion/">Data deletion & disconnection</a></p></div><div class="panel demo-panel"><h3>Reviewer demo sequence</h3><ol><li>Open this live app.</li><li>Click Start OAuth demo and show the complete Pinterest consent screen.</li><li>Approve access and return to Decor Areas Studio.</li><li>Open Analytics and show authorized organic metrics.</li><li>Connect Sandbox, prepare one Pin, explicitly confirm publishing and show the returned Pin ID.</li></ol><a class="primary link-button wide" href="/api/pinterest?action=oauth&env=production">Start OAuth demo</a></div>
+      <div class="panel policy"><strong>Review safeguards</strong><p>Decor Areas Studio requests only the permissions needed for the features shown here. Pinterest API data is fetched on demand for the authorized account and is not used for competitor research, benchmarking, cross-account aggregation, off-Pinterest advertising, or AI model training.</p><p>Standard access is active. Production publishing requires explicit user confirmation for each individual Pin. Pinterest Sandbox remains available for isolated testing.</p><p><a href="/privacy/">Privacy</a> · <a href="/security/">Security</a> · <a href="/data-deletion/">Data deletion & disconnection</a></p></div><div class="panel demo-panel"><h3>Connection</h3><p>Connect or reconnect the Pinterest account through Pinterest OAuth. Decor Areas Studio accesses only data authorized by that account.</p><a class="primary link-button wide" href="/api/pinterest?action=oauth&env=production">Connect Pinterest</a></div>
     </section>
 
     <section class="page" id="page-settings">
