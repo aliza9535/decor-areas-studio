@@ -29,6 +29,7 @@
       <button class="nav" data-page="integrations"><span>⌘</span>Integrations</button>
       <button class="nav" data-page="plans"><span>◇</span>Plans</button>
       <button class="nav" data-page="settings"><span>⚙</span>Settings</button>
+      <button class="nav owner-only hidden" data-page="admin"><span>◆</span>Owner Console</button>
     </nav>
     <div class="side-status">
       <div class="connection-line"><span id="connectionDot"></span><div><strong>Pinterest API</strong><small id="connectionText">Checking…</small></div></div>
@@ -91,7 +92,9 @@
         <div class="panel form-panel">
           <div class="section-block"><span class="step">1</span><div><strong>Source</strong><small>Start with a keyword, article, or your own copy.</small></div></div>
           <div class="form-grid two"><label>Keyword / topic<input id="keyword" maxlength="240" placeholder="small bedroom storage"></label><label>Brand / site<input id="brand" maxlength="160" placeholder="decorareas.com"></label></div>
-          <div class="button-row"><button class="secondary" id="generateCopy">Generate copy options</button><span class="status-chip" id="aiTextStatus">Smart draft ready</span></div>
+          <div class="ai-control-grid"><label>Text model<select id="aiTextModel"><option>Loading models…</option></select></label><label>AI credits<div class="credit-box"><strong id="aiCreditBalance">0</strong><small>available</small></div></label></div>
+          <label>Extra instructions (optional)<textarea id="aiInstructions" rows="3" maxlength="2000" placeholder="Example: Write in a warm editorial tone, avoid numbered titles, mention small-space living."></textarea></label>
+          <div class="button-row"><button class="secondary" id="generateCopy">Generate copy options</button><span class="status-chip" id="aiTextStatus">Smart draft ready</span><span class="status-chip" id="aiTextCost">0 credits</span></div>
           <div id="copyVariants" class="variant-grid"></div>
 
           <div class="section-block"><span class="step">2</span><div><strong>Publishing details</strong><small>Everything remains editable.</small></div></div>
@@ -104,7 +107,7 @@
           <div class="visual-tabs"><button class="visual-tab active" data-visual="upload">Upload</button><button class="visual-tab" data-visual="template">Template</button><button class="visual-tab" data-visual="ai">AI image</button></div>
           <div class="visual-panel" id="visual-upload"><label>Pin image<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="privacy-row"><button class="secondary" id="cleanMetadata">Remove private EXIF/GPS metadata</button><small>JPEG/PNG only. Image pixels and provenance / Content Credentials are preserved.</small></div></div>
           <div class="visual-panel hidden" id="visual-template"><div class="form-grid two"><label>Template<select id="templateStyle"><option value="editorial">Editorial</option><option value="clean">Clean</option><option value="bold">Bold</option><option value="minimal">Minimal</option></select></label><label>Footer<input id="templateFooter" maxlength="60" placeholder="yourdomain.com"></label></div><button class="secondary" id="makeTemplate">Generate 2:3 template</button></div>
-          <div class="visual-panel hidden" id="visual-ai"><label>Image prompt<textarea id="imagePrompt" rows="4" placeholder="Describe the vertical Pin visual you want"></textarea></label><button class="secondary" id="generateImage">Generate AI image</button><div class="notice subtle" id="aiImageNotice">Requires an AI image provider key. Generated-image provenance is not removed or hidden.</div></div>
+          <div class="visual-panel hidden" id="visual-ai"><div class="form-grid two"><label>Image model<select id="aiImageModel"><option>Loading models…</option></select></label><label>Quality<select id="aiImageQuality"><option value="low">Low · fastest</option><option value="medium" selected>Medium</option><option value="high">High · more credits</option></select></label></div><label>Image prompt<textarea id="imagePrompt" rows="4" placeholder="Describe the vertical Pin visual you want"></textarea></label><div class="button-row"><button class="secondary" id="generateImage">Generate AI image</button><span class="status-chip" id="aiImageCost">— credits</span></div><div class="notice subtle" id="aiImageNotice">Generated-image provenance is not intentionally removed or hidden.</div></div>
 
           <div class="section-block"><span class="step">4</span><div><strong>Publish choice</strong><small>Publish now or schedule the exact reviewed Pin.</small></div></div>
           <div class="publish-row"><button class="primary" id="publish" disabled>Review & publish now</button><div class="schedule-row"><input id="scheduleAt" type="datetime-local"><button class="secondary" id="schedulePin" disabled>Schedule</button></div></div>
@@ -155,10 +158,28 @@
     </section>
 
     <section class="page" id="page-analytics">
-      <div class="page-heading"><div><span class="eyebrow">ORGANIC ANALYTICS</span><h1>Performance</h1><p>Live metrics for the authorized Pinterest account.</p></div><div class="button-row"><select id="analyticsRange"><option value="30">30 days</option><option value="7">7 days</option><option value="90">90 days</option></select><button class="secondary" id="refreshAnalytics">Refresh</button></div></div>
+      <div class="page-heading"><div><span class="eyebrow">ORGANIC ANALYTICS</span><h1>Performance</h1><p>Interactive metrics for the authorized Pinterest account. Hover the chart to inspect each day.</p></div><div class="button-row"><select id="analyticsRange"><option value="30">30 days</option><option value="7">7 days</option><option value="90">90 days</option></select><button class="secondary" id="refreshAnalytics">Refresh</button></div></div>
       <div class="notice" id="analyticsNotice">Connect Pinterest to load analytics.</div>
-      <div class="metric-grid"><article class="metric-card"><span class="metric-icon">◉</span><div><small>Impressions</small><strong id="metricImpressions">—</strong></div></article><article class="metric-card"><span class="metric-icon">♡</span><div><small>Saves</small><strong id="metricSaves">—</strong></div></article><article class="metric-card"><span class="metric-icon">↗</span><div><small>Pin clicks</small><strong id="metricClicks">—</strong></div></article><article class="metric-card"><span class="metric-icon">→</span><div><small>Outbound clicks</small><strong id="metricOutbound">—</strong></div></article></div>
-      <article class="panel chart-panel"><div class="panel-head"><div><span class="kicker">TREND</span><h2>Impressions over time</h2></div></div><div class="chart-wrap"><canvas id="analyticsChart"></canvas><div class="chart-empty" id="analyticsChartEmpty">Daily trend will appear here.</div></div></article>
+      <div class="metric-grid analytics-metrics">
+        <article class="metric-card"><span class="metric-icon">◉</span><div><small>Impressions</small><strong id="metricImpressions">—</strong></div></article>
+        <article class="metric-card"><span class="metric-icon">✦</span><div><small>Engagements</small><strong id="metricEngagements">—</strong></div></article>
+        <article class="metric-card"><span class="metric-icon">♡</span><div><small>Saves</small><strong id="metricSaves">—</strong></div></article>
+        <article class="metric-card"><span class="metric-icon">↗</span><div><small>Pin clicks</small><strong id="metricClicks">—</strong></div></article>
+        <article class="metric-card"><span class="metric-icon">→</span><div><small>Outbound clicks</small><strong id="metricOutbound">—</strong></div></article>
+      </div>
+      <div class="metric-switcher" id="metricSwitcher">
+        <button class="metric-toggle active" data-metric="IMPRESSION">Impressions</button>
+        <button class="metric-toggle" data-metric="ENGAGEMENT">Engagements</button>
+        <button class="metric-toggle" data-metric="SAVE">Saves</button>
+        <button class="metric-toggle" data-metric="PIN_CLICK">Pin clicks</button>
+        <button class="metric-toggle" data-metric="OUTBOUND_CLICK">Outbound clicks</button>
+        <button class="metric-toggle" data-metric="ENGAGEMENT_RATE">Engagement rate</button>
+        <button class="metric-toggle" data-metric="SAVE_RATE">Save rate</button>
+        <button class="metric-toggle" data-metric="PIN_CLICK_RATE">Pin click rate</button>
+        <button class="metric-toggle" data-metric="OUTBOUND_CLICK_RATE">Outbound rate</button>
+        <button class="metric-toggle disabled" disabled title="Sales/conversion reporting requires separate ads/conversion access">Sales</button>
+      </div>
+      <article class="panel chart-panel"><div class="panel-head"><div><span class="kicker">TREND</span><h2 id="analyticsChartTitle">Impressions over time</h2></div><span class="status-chip" id="analyticsHoverHint">Hover chart for daily value</span></div><div class="chart-wrap interactive"><canvas id="analyticsChart"></canvas><div class="chart-empty" id="analyticsChartEmpty">Daily trend will appear here.</div><div class="chart-tooltip hidden" id="analyticsTooltip"></div></div></article>
       <article class="panel recent-panel"><div class="panel-head"><div><span class="kicker">TOP CONTENT</span><h2>Top Pins with visuals</h2></div><span class="muted">Up to 50 from Pinterest analytics</span></div><div id="topPinCards" class="performance-grid"><div class="empty-state">Load analytics and your Pin library.</div></div></article>
     </section>
 
@@ -171,14 +192,12 @@
     </section>
 
     <section class="page" id="page-integrations">
-      <div class="page-heading"><div><span class="eyebrow">CONNECTIONS</span><h1>Integrations</h1><p>Visible status for every service that powers the product.</p></div></div>
+      <div class="page-heading"><div><span class="eyebrow">YOUR CONNECTIONS</span><h1>Integrations</h1><p>Only connections a workspace user needs are shown here. Infrastructure and provider keys stay in the Owner Console.</p></div></div>
       <div class="integration-grid">
-        <article class="integration-card"><div class="integration-icon pinterest">P</div><div><h3>Pinterest</h3><p>OAuth, Boards, Pins and organic analytics.</p><span id="pinterestIntegration" class="status-chip">Checking…</span></div><a class="secondary link-button" href="/api/pinterest?action=oauth&env=production">Connect</a></article>
-        <article class="integration-card"><div class="integration-icon">DB</div><div><h3>PostgreSQL</h3><p>Accounts, secure sessions and scheduler queue.</p><span id="dbIntegration" class="status-chip">Checking…</span></div></article>
-        <article class="integration-card"><div class="integration-icon">AI</div><div><h3>AI provider</h3><p>Optional text and image generation from user-supplied content only.</p><span id="aiIntegration" class="status-chip">Checking…</span></div></article>
-        <article class="integration-card"><div class="integration-icon">WP</div><div><h3>WordPress</h3><p>Public published posts through WordPress REST.</p><span class="status-chip good">Ready</span></div><button class="secondary jump" data-page="blog">Use</button></article>
-        <article class="integration-card"><div class="integration-icon">S</div><div><h3>Stripe</h3><p>Subscription checkout and billing portal.</p><span id="billingIntegration" class="status-chip">Checking…</span></div><button class="secondary" id="manageBilling">Manage</button></article>
-        <article class="integration-card"><div class="integration-icon">SB</div><div><h3>Sandbox</h3><p>Separate Pinterest test environment.</p><span id="sandboxIntegration" class="status-chip">Checking…</span></div><a class="secondary link-button" href="/api/pinterest?action=oauth&env=sandbox">Connect</a></article>
+        <article class="integration-card"><div class="integration-icon pinterest">P</div><div><h3>Pinterest</h3><p>Official OAuth for your Boards, Pins, publishing and organic analytics.</p><span id="pinterestIntegration" class="status-chip">Checking…</span></div><a class="secondary link-button" href="/api/pinterest?action=oauth&env=production">Connect</a></article>
+        <article class="integration-card"><div class="integration-icon">WP</div><div><h3>Website / WordPress</h3><p>Save a public WordPress site and import published posts without sharing your WordPress password.</p><span id="websiteIntegration" class="status-chip">Optional</span></div><button class="secondary jump" data-page="blog">Manage</button></article>
+        <article class="integration-card"><div class="integration-icon">AI</div><div><h3>AI generation</h3><p>Uses Studio credits and owner-configured models. You never need to paste the owner's API key.</p><span id="aiIntegration" class="status-chip">Checking…</span></div><button class="secondary jump" data-page="create">Create</button></article>
+        <article class="integration-card"><div class="integration-icon">✉</div><div><h3>Email verification</h3><p>Protects workspace access and AI credits.</p><span id="emailIntegration" class="status-chip">Checking…</span></div><button class="secondary jump" data-page="settings">Account</button></article>
       </div>
       <article class="panel compliance-panel"><div><span class="kicker">GUARDRAILS</span><h2>Protecting Standard access</h2></div><div class="compliance-tags"><span>Explicit Pin selection</span><span>No Pinterest scraping</span><span>No competitor benchmarking</span><span>No hidden engagement automation</span><span>No Pinterest-data AI training</span><span>Provenance preserved</span></div></article>
     </section>
@@ -194,10 +213,31 @@
       <div class="notice subtle" id="billingNotice">Sign in to manage a plan.</div>
     </section>
 
+    <section class="page" id="page-admin">
+      <div class="page-heading"><div><span class="eyebrow">OWNER ONLY</span><h1>Owner Console</h1><p>Configure private provider keys, available models, default prompts, email verification and user AI credits. Regular workspace users cannot see this page.</p></div><button class="secondary" id="refreshAdmin">Refresh</button></div>
+      <div class="owner-grid">
+        <article class="panel"><div class="panel-head"><div><span class="kicker">AI PROVIDER</span><h2>OpenAI configuration</h2></div><span id="adminAiStatus" class="status-chip">Checking…</span></div>
+          <label>OpenAI API key<input id="adminOpenAIKey" type="password" autocomplete="off" placeholder="Leave blank to keep current key"></label>
+          <div class="form-grid two"><label>Allowed text models<textarea id="adminTextModels" rows="4" placeholder="One model ID per line"></textarea></label><label>Allowed image models<textarea id="adminImageModels" rows="4" placeholder="One model ID per line"></textarea></label></div>
+          <label>Default generation prompt<textarea id="adminDefaultPrompt" rows="6"></textarea></label>
+          <div class="credit-cost-grid"><label>Text credits<input id="adminTextCost" type="number" min="0"></label><label>Image low<input id="adminImageLowCost" type="number" min="0"></label><label>Image medium<input id="adminImageMediumCost" type="number" min="0"></label><label>Image high<input id="adminImageHighCost" type="number" min="0"></label></div>
+          <div class="button-row"><button class="secondary" id="syncOpenAIModels">Load available models</button><button class="primary" id="saveAISettings">Save AI settings</button></div><div class="notice subtle" id="adminAiNotice">The owner pays the provider; users spend Studio credits. API keys are encrypted before database storage.</div>
+        </article>
+        <article class="panel"><div class="panel-head"><div><span class="kicker">EMAIL</span><h2>Email verification</h2></div><span id="adminEmailStatus" class="status-chip">Checking…</span></div>
+          <label>Resend API key<input id="adminResendKey" type="password" autocomplete="off" placeholder="Leave blank to keep current key"></label>
+          <label>From address<input id="adminEmailFrom" placeholder="Decor Areas Studio <hello@yourdomain.com>"></label>
+          <button class="primary" id="saveEmailSettings">Save email settings</button>
+          <div class="notice subtle" id="adminEmailNotice">New public signups receive a verification link when a mail provider and verified sender are configured.</div>
+        </article>
+      </div>
+      <article class="panel owner-users"><div class="panel-head"><div><span class="kicker">CUSTOMERS</span><h2>Users & AI credits</h2></div><span id="adminUserCount" class="count-pill">0 users</span></div><div class="table-wrap"><table><thead><tr><th>Email</th><th>Role</th><th>Email</th><th>Credits</th><th>Adjust</th></tr></thead><tbody id="adminUsers"><tr><td colspan="5">Loading…</td></tr></tbody></table></div></article>
+      <article class="panel owner-infra"><div class="panel-head"><div><span class="kicker">INFRASTRUCTURE</span><h2>Internal services</h2></div></div><div class="integration-grid compact"><div class="integration-card"><div class="integration-icon">DB</div><div><h3>PostgreSQL</h3><p>Accounts, settings, scheduler and credits.</p><span id="adminDbStatus" class="status-chip">Checking…</span></div></div><div class="integration-card"><div class="integration-icon">S</div><div><h3>Stripe</h3><p>Internal billing integration; not shown as a user connection.</p><span id="billingIntegration" class="status-chip">Not configured</span></div></div><div class="integration-card"><div class="integration-icon">SB</div><div><h3>Pinterest Sandbox</h3><p>Owner/test environment only.</p><span id="sandboxIntegration" class="status-chip">Optional</span></div></div></div></article>
+    </section>
+
     <section class="page" id="page-settings">
       <div class="page-heading"><div><span class="eyebrow">ACCOUNT & SECURITY</span><h1>Settings</h1><p>Workspace login, Pinterest authorization and data controls.</p></div></div>
       <div class="settings-grid">
-        <article class="panel"><div class="panel-head"><div><span class="kicker">WORKSPACE</span><h2>Account</h2></div><span id="accountStatus" class="status-chip">Checking…</span></div><div id="authForms"><div class="auth-tabs"><button class="auth-tab active" data-auth="login">Sign in</button><button class="auth-tab" data-auth="signup">Create account</button></div><label>Email<input id="authEmail" type="email"></label><label>Password<input id="authPassword" type="password"></label><button class="primary wide" id="authSubmit">Sign in</button><div class="notice subtle" id="authNotice">A workspace account is required for durable scheduling.</div></div><div id="signedInPanel" class="hidden"><div class="account-card"><div class="avatar">DA</div><div><strong id="signedInEmail">—</strong><small>Plan: <span id="signedInPlan">free</span></small></div></div><button class="secondary" id="logout">Sign out</button></div></article>
+        <article class="panel"><div class="panel-head"><div><span class="kicker">WORKSPACE</span><h2>Account</h2></div><span id="accountStatus" class="status-chip">Checking…</span></div><div id="authForms"><div class="auth-tabs"><button class="auth-tab active" data-auth="login">Sign in</button><button class="auth-tab" data-auth="signup">Create account</button></div><label>Email<input id="authEmail" type="email"></label><label>Password<input id="authPassword" type="password"></label><button class="primary wide" id="authSubmit">Sign in</button><div class="notice subtle" id="authNotice">A workspace account is required for durable scheduling.</div></div><div id="signedInPanel" class="hidden"><div class="account-card"><div class="avatar">DA</div><div><strong id="signedInEmail">—</strong><small>Plan: <span id="signedInPlan">free</span> · <span id="signedInRole">user</span></small></div></div><div class="verification-row"><span id="verificationStatus" class="status-chip">Checking email…</span><button class="secondary hidden" id="resendVerification">Resend verification</button></div><button class="secondary" id="logout">Sign out</button></div></article>
         <article class="panel"><div class="panel-head"><div><span class="kicker">PINTEREST</span><h2>Authorization</h2></div><span id="pinterestSetting" class="status-chip">Checking…</span></div><p class="muted">Official OAuth only. Decor Areas Studio never asks for Pinterest passwords or session cookies.</p><div class="button-row"><a class="primary link-button" href="/api/pinterest?action=oauth&env=production">Connect / reconnect</a><button class="secondary" id="disconnectPinterest">Disconnect browser</button></div></article>
         <article class="panel"><div class="panel-head"><div><span class="kicker">DATA</span><h2>Delete workspace</h2></div></div><p class="muted">Deletes the workspace account and cascading application records from the connected database.</p><button class="danger" id="deleteAccount">Delete workspace account</button></article>
         <article class="panel"><div class="panel-head"><div><span class="kicker">LEGAL</span><h2>Policies</h2></div></div><div class="legal-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/security/">Security</a><a href="/data-deletion/">Data deletion</a></div></article>
