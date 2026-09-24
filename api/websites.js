@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import {getDb,ensureSchema,dbConfigured} from './lib/db.js';
-import {getSessionUser,trustedPost} from './lib/auth.js';
+import {getDb,ensureSchema,dbConfigured} from '../server/db.js';
+import {getSessionUser,trustedPost} from '../server/auth.js';
 
 function cleanUrl(raw){
   const u=new URL(String(raw||'').trim());
