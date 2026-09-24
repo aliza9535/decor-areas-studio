@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
-import {getDb,ensureSchema,dbConfigured} from './lib/db.js';
-import {getSessionUser,trustedPost,appOrigin} from './lib/auth.js';
+import {getDb,ensureSchema,dbConfigured} from '../server/db.js';
+import {getSessionUser,trustedPost,appOrigin} from '../server/auth.js';
 
 function configured(){return !!process.env.STRIPE_SECRET_KEY}
 function stripe(){return new Stripe(process.env.STRIPE_SECRET_KEY)}
