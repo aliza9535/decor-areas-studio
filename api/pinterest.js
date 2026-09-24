@@ -71,7 +71,7 @@ export default async function handler(req,res){
   }
 
   if(action==='analytics'){
-    const days=Math.min(90,Math.max(7,Number(req.query.days)||30)),end=new Date(),start=new Date(Date.now()-(days-1)*86400000),ymd=d=>d.toISOString().slice(0,10),common='start_date='+ymd(start)+'&end_date='+ymd(end)+'&from_claimed_content=BOTH&pin_format=ALL&app_types=ALL&content_type=ALL&source=ALL';
+    const days=Math.min(90,Math.max(7,Number(req.query.days)||30)),end=new Date(),start=new Date(Date.now()-(days-1)*86400000),ymd=d=>d.toISOString().slice(0,10),metrics='IMPRESSION,ENGAGEMENT,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT_RATE,SAVE_RATE,PIN_CLICK_RATE,OUTBOUND_CLICK_RATE',common='start_date='+ymd(start)+'&end_date='+ymd(end)+'&from_claimed_content=BOTH&pin_format=ALL&app_types=ALL&content_type=ALL&source=ALL&metric_types='+encodeURIComponent(metrics);
     const a=await pinterest(req,res,'production','/user_account/analytics?'+common+'&split_field=NO_SPLIT');if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');
     const tp=await pinterest(req,res,'production','/user_account/analytics/top_pins?'+common+'&sort_by=IMPRESSION&metric_types=IMPRESSION,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT&num_of_pins=50');
     const first=Object.values(a.data||{}).find(v=>v&&typeof v==='object'&&(v.summary_metrics||v.daily_metrics))||{};
