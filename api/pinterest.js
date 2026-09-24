@@ -51,7 +51,7 @@ export default async function handler(req,res){
   }
 
   if(action==='boards'){
-    let boards=[],bookmark=null,pages=0;do{const out=await pinterest(req,res,'production','/boards?page_size=100'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));if(!out.ok)return fail(out,res,'Could not load Pinterest Boards');if(Array.isArray(out.data?.items))boards.push(...out.data.items);bookmark=out.data?.bookmark||null;pages++}while(bookmark&&pages<20);
+    let boards=[],bookmark=null,pages=0;do{const out=await pinterest(req,res,'production','/boards?page_size=250'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));if(!out.ok)return fail(out,res,'Could not load Pinterest Boards');if(Array.isArray(out.data?.items))boards.push(...out.data.items);bookmark=out.data?.bookmark||null;pages++}while(bookmark&&pages<50);
     return res.status(200).json({ok:true,boards});
   }
 
@@ -61,7 +61,7 @@ export default async function handler(req,res){
   }
 
   if(action==='pins'){
-    const bookmark=req.query.bookmark?String(req.query.bookmark):'';const out=await pinterest(req,res,'production','/pins?page_size=50'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));if(!out.ok)return fail(out,res,'Could not load Pinterest Pins');return res.status(200).json({ok:true,pins:out.data?.items||[],bookmark:out.data?.bookmark||null});
+    const bookmark=req.query.bookmark?String(req.query.bookmark):'';const out=await pinterest(req,res,'production','/pins?page_size=250&pin_metrics=true'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));if(!out.ok)return fail(out,res,'Could not load Pinterest Pins');return res.status(200).json({ok:true,pins:out.data?.items||[],bookmark:out.data?.bookmark||null});
   }
 
   if(action==='delete-pin'){
@@ -69,8 +69,11 @@ export default async function handler(req,res){
   }
 
   if(action==='analytics'){
-    const end=new Date(),start=new Date(Date.now()-29*86400000),ymd=d=>d.toISOString().slice(0,10),common='start_date='+ymd(start)+'&end_date='+ymd(end)+'&from_claimed_content=BOTH&pin_format=ALL&app_types=ALL&content_type=ALL&source=ALL';
-    const a=await pinterest(req,res,'production','/user_account/analytics?'+common+'&split_field=NO_SPLIT');if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');const tp=await pinterest(req,res,'production','/user_account/analytics/top_pins?'+common+'&sort_by=IMPRESSION&metric_types=IMPRESSION,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT&num_of_pins=10');const first=Object.values(a.data||{}).find(v=>v&&typeof v==='object'&&v.summary_metrics)||{};return res.status(200).json({ok:true,summary:first.summary_metrics||{},topPins:tp.ok?(tp.data?.pins||[]):[]});
+    const days=Math.min(90,Math.max(7,Number(req.query.days)||30)),end=new Date(),start=new Date(Date.now()-(days-1)*86400000),ymd=d=>d.toISOString().slice(0,10),common='start_date='+ymd(start)+'&end_date='+ymd(end)+'&from_claimed_content=BOTH&pin_format=ALL&app_types=ALL&content_type=ALL&source=ALL';
+    const a=await pinterest(req,res,'production','/user_account/analytics?'+common+'&split_field=NO_SPLIT');if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');
+    const tp=await pinterest(req,res,'production','/user_account/analytics/top_pins?'+common+'&sort_by=IMPRESSION&metric_types=IMPRESSION,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT&num_of_pins=50');
+    const first=Object.values(a.data||{}).find(v=>v&&typeof v==='object'&&(v.summary_metrics||v.daily_metrics))||{};
+    return res.status(200).json({ok:true,days,summary:first.summary_metrics||{},series:first.daily_metrics||[],topPins:tp.ok?(tp.data?.pins||[]):[]});
   }
 
   if(action==='sandbox-setup'){
@@ -81,8 +84,8 @@ export default async function handler(req,res){
   }
 
   if(action==='create'){
-    if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});const body=req.body||{},env=body.sandbox===true?'sandbox':'production',title=String(body.title||'').trim(),destination=String(body.destination||'').trim();if(!body.board_id||!title)return res.status(400).json({error:'Board and title are required'});if(!body.image_base64)return res.status(400).json({error:'Choose or design an image'});if(destination&&!validHttpUrl(destination))return res.status(400).json({error:'Destination URL must start with http:// or https://'});
-    const media_source={source_type:'image_base64',content_type:String(body.content_type||'image/jpeg'),data:String(body.image_base64),is_standard:true},payload={board_id:String(body.board_id),title:title.slice(0,100),description:String(body.description||'').slice(0,800),alt_text:String(body.alt_text||'').slice(0,500),media_source};if(destination)payload.link=destination;
+    if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});const body=req.body||{},env=body.sandbox===true?'sandbox':'production',title=String(body.title||'').trim(),destination=String(body.destination||'').trim();if(!body.board_id||!title)return res.status(400).json({error:'Board and title are required'});if(!body.image_base64&&!body.image_url)return res.status(400).json({error:'Choose, design or generate an image'});if(destination&&!validHttpUrl(destination))return res.status(400).json({error:'Destination URL must start with http:// or https://'});
+    const media_source=body.image_url?{source_type:'image_url',url:String(body.image_url),is_standard:true}:{source_type:'image_base64',content_type:String(body.content_type||'image/jpeg'),data:String(body.image_base64),is_standard:true},payload={board_id:String(body.board_id),title:title.slice(0,100),description:String(body.description||'').slice(0,800),alt_text:String(body.alt_text||'').slice(0,500),media_source};if(destination)payload.link=destination;
     const out=await pinterest(req,res,env,'/pins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!out.ok)return fail(out,res,'Pinterest rejected the publishing request');return res.status(201).json({ok:true,pin:out.data,environment:env});
   }
 
