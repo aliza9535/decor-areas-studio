@@ -1,7 +1,7 @@
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 const state={
   user:null,dbConfigured:false,productionConnected:false,sandboxConnected:false,boards:[],pins:[],analytics:null,schedule:[],
-  ai:{textAI:false,imageAI:false,provider:'Smart fallback',textModels:[],imageModels:[],costs:{text:0,image:{low:0,medium:0,high:0}},credits:0},billing:null,article:null,wpPosts:[],sites:[],admin:null,analyticsMetric:'IMPRESSION',chartPoints:new Map(),
+  ai:{textAI:false,imageAI:false,provider:'Smart fallback',textModels:[],imageModels:[],costs:{text:0,image:{low:0,medium:0,high:0}},credits:0},billing:null,article:null,wpPosts:[],sites:[],admin:null,analyticsMetric:'IMPRESSION',chartPoints:new Map(),fullLibraryLoaded:false,fullLibraryLoading:false,
   fileData:null,fileType:null,fileName:null,fileBytes:null,remoteImage:null,imageSource:null,lastPack:null
 };
 const PAGE_META={dashboard:['Dashboard','Content operations at a glance'],create:['Create Pin','Manual + AI-assisted creative workflow'],blog:['Blog → Pin','Import, generate, review and schedule'],scheduler:['Scheduler','Approved future publishing'],library:['Pin Library','Full authorized account library'],analytics:['Analytics','Organic performance'],boards:['Boards','Organize content'],integrations:['Integrations','Connections and safeguards'],plans:['Plans','Subscriptions and queue capacity'],settings:['Settings','Account and authorization'],admin:['Owner Console','Private provider and customer controls']};
@@ -9,9 +9,33 @@ const fmt=new Intl.NumberFormat();
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function compact(v){const n=Number(v||0);return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(n>=1e5?0:1)+'K':fmt.format(Math.round(n))}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2600)}
-async function api(url,opt){const r=await fetch(url,opt);let d={};try{d=await r.json()}catch{};if(!r.ok){const e=new Error(d.error||('HTTP '+r.status));e.status=r.status;e.data=d;throw e}return d}
-function post(url,body){return api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})})}
-function show(name){if(name==='admin'&&state.user?.role!=='owner'){toast('Owner access required');name='dashboard'}$$('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===name));$$('.page').forEach(p=>p.classList.remove('active'));$('#page-'+name)?.classList.add('active');const m=PAGE_META[name]||[name,''];$('#pageTitle').textContent=m[0];$('#pageSubtitle').textContent=m[1];$('.sidebar')?.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});if(name==='analytics')loadAnalytics();if(name==='library'&&!state.pins.length)loadAllPins();if(name==='scheduler')loadSchedule();if(name==='blog')loadWebsites();if(name==='integrations')loadIntegrations();if(name==='plans')loadBilling();if(name==='settings')refreshSettings();if(name==='boards')loadBoards(true);if(name==='admin')loadAdmin()}
+async function api(url,opt={},timeout=18000){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
+  try{
+    const r=await fetch(url,{...opt,signal:opt.signal||controller.signal});let d={};try{d=await r.json()}catch{}
+    if(!r.ok){const e=new Error(d.error||('HTTP '+r.status));e.status=r.status;e.data=d;throw e}
+    return d
+  }catch(e){if(e?.name==='AbortError')throw new Error('This request took too long. The app is still usable — please try Refresh.');throw e}
+  finally{clearTimeout(timer)}
+}
+function post(url,body,timeout=20000){return api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})},timeout)}
+function setBusy(button,busy,label){if(!button)return;button.disabled=!!busy;button.classList.toggle('is-busy',!!busy);if(label!=null){if(busy){button.dataset.idleText=button.textContent;button.textContent=label}else if(button.dataset.idleText){button.textContent=button.dataset.idleText;delete button.dataset.idleText}}}
+function show(name){
+  if(name==='admin'&&state.user?.role!=='owner'){toast('Owner access required');name='dashboard'}
+  $('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===name));$('.page').forEach(p=>p.classList.remove('active'));$('#page-'+name)?.classList.add('active');
+  const m=PAGE_META[name]||[name,''];$('#pageTitle').textContent=m[0];$('#pageSubtitle').textContent=m[1];$('.sidebar')?.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});
+  if(name==='dashboard')loadDashboardPinterest();
+  if(name==='create')loadBoards();
+  if(name==='analytics'){loadAnalytics();if(state.pins.length<25)loadPinPreview(100)}
+  if(name==='library'&&!state.fullLibraryLoaded)loadAllPins();
+  if(name==='scheduler')loadSchedule();
+  if(name==='blog')loadWebsites();
+  if(name==='integrations')loadIntegrations();
+  if(name==='plans')loadBilling();
+  if(name==='settings')refreshSettings();
+  if(name==='boards')loadBoards(true);
+  if(name==='admin')loadAdmin()
+}
 $$('.nav,.jump').forEach(b=>b.onclick=()=>show(b.dataset.page));$('#mobileMenu').onclick=()=>$('.sidebar').classList.toggle('open');$('#accountAction').onclick=()=>show('settings');
 
 function updateOnboarding(){
@@ -40,14 +64,63 @@ async function loadUser(){try{const d=await api('/api/auth/user?action=me');stat
   }else if($('#emailIntegration')){$('#emailIntegration').textContent='Sign in required';$('#emailIntegration').className='status-chip'}
   if($('#adminDbStatus')){$('#adminDbStatus').textContent=state.dbConfigured?'Connected':'Not connected';$('#adminDbStatus').className='status-chip '+(state.dbConfigured?'good':'warn')}
   updateOnboarding();return state.user}
-let authMode='login';$('.auth-tab').forEach(b=>b.onclick=()=>{authMode=b.dataset.auth;$('.auth-tab').forEach(x=>x.classList.toggle('active',x===b));$('#authSubmit').textContent=authMode==='signup'?'Create account':'Sign in'});
-$('#authSubmit').onclick=async()=>{const n=$('#authNotice');n.className='notice subtle';n.textContent='Working…';try{const d=await post('/api/auth/user?action='+authMode,{email:$('#authEmail').value,password:$('#authPassword').value});state.user=d.user;n.className='notice success';n.textContent=authMode==='signup'?(d.verification?.sent?'Account created. Check your email for the verification link.':'Account created. Email verification will become available when the owner configures email delivery.'):'Signed in.';await loadUser();if(authMode==='signup'){show('dashboard');updateOnboarding()}toast(authMode==='signup'?(d.verification?.sent?'Account created — verify your email next':'Account created — connect Pinterest next'):'Signed in')}catch(e){n.className='notice error';n.textContent=e.message}};
-$('#resendVerification').onclick=async()=>{try{await post('/api/auth/user?action=resend',{});$('#authNotice').className='notice success';$('#authNotice').textContent='Verification email sent. Check your inbox.';toast('Verification email sent')}catch(e){$('#authNotice').className='notice error';$('#authNotice').textContent=e.message}};
-$('#changePassword').onclick=async()=>{const next=$('#newPassword').value,current=$('#currentPassword').value;if(next.length<8){toast('Use at least 8 characters for the new password');return}try{await post('/api/auth/user?action=change-password',{current_password:current,new_password:next});$('#currentPassword').value='';$('#newPassword').value='';toast('Password updated successfully')}catch(e){toast(e.message)}};
-$('#logout').onclick=async()=>{try{await post('/api/auth/user?action=logout',{});await loadUser();toast('Signed out')}catch(e){toast(e.message)}};
+let authMode='login';
+function setAuthMode(mode){
+  authMode=mode==='signup'?'signup':'login';
+  $$('.auth-tab').forEach(x=>x.classList.toggle('active',x.dataset.auth===authMode));
+  $('#authSubmit').textContent=authMode==='signup'?'Create Studio account':'Sign in to Studio';
+  $('#authPassword').autocomplete=authMode==='signup'?'new-password':'current-password';
+  $('#authNotice').className='notice subtle';
+  $('#authNotice').textContent=authMode==='signup'?'Create a Decor Areas Studio account. This password is separate from Pinterest.':'Sign in with your Decor Areas Studio email and password — not your Pinterest password.';
+}
+$$('.auth-tab').forEach(b=>b.onclick=()=>setAuthMode(b.dataset.auth));
+$('#authSubmit').onclick=async()=>{
+  const n=$('#authNotice'),btn=$('#authSubmit'),email=$('#authEmail').value.trim(),password=$('#authPassword').value;
+  if(!email){n.className='notice error';n.textContent='Enter your Studio email address.';return}
+  if(password.length<8){n.className='notice error';n.textContent='Studio passwords must be at least 8 characters.';return}
+  n.className='notice';n.textContent=authMode==='signup'?'Creating your workspace…':'Signing you in…';setBusy(btn,true,authMode==='signup'?'Creating…':'Signing in…');
+  try{
+    const d=await post('/api/auth/user?action='+authMode,{email,password});
+    state.user=d.user;n.className='notice success';
+    n.textContent=authMode==='signup'?(d.verification?.sent?'Workspace created. Check your email to verify it.':'Workspace created. Email verification will activate after the owner configures mail delivery.'):'Signed in successfully.';
+    await loadUser();$('#authPassword').value='';
+    if(authMode==='signup'){show('dashboard');updateOnboarding()}
+    toast(authMode==='signup'?'Studio account created':'Signed in to Studio')
+  }catch(e){n.className='notice error';n.textContent=e.message}
+  finally{setBusy(btn,false)}
+};
+$('#resendVerification').onclick=async()=>{
+  const b=$('#resendVerification');setBusy(b,true,'Sending…');
+  try{await post('/api/auth/user?action=resend',{});toast('Verification email sent')}catch(e){toast(e.message)}
+  finally{setBusy(b,false)}
+};
+$('#changePassword').onclick=async()=>{
+  const btn=$('#changePassword'),n=$('#passwordNotice'),next=$('#newPassword').value,current=$('#currentPassword').value;
+  n.className='notice subtle';n.classList.remove('hidden');
+  if(next.length<8){n.className='notice error';n.textContent='Use at least 8 characters for the new Studio password.';return}
+  n.textContent='Saving your new Studio password…';setBusy(btn,true,'Saving…');
+  try{
+    await post('/api/auth/user?action=change-password',{current_password:current,new_password:next});
+    $('#currentPassword').value='';$('#newPassword').value='';n.className='notice success';n.textContent='Password changed successfully. Use this new password the next time you sign in to Decor Areas Studio.';toast('Studio password updated')
+  }catch(e){n.className='notice error';n.textContent=e.message}
+  finally{setBusy(btn,false)}
+};
+$('#logout').onclick=async()=>{const b=$('#logout');setBusy(b,true,'Signing out…');try{await post('/api/auth/user?action=logout',{});await loadUser();setAuthMode('login');toast('Signed out of Studio')}catch(e){toast(e.message)}finally{setBusy(b,false)}};
+$('#signOutToSignup').onclick=async()=>{try{await post('/api/auth/user?action=logout',{});await loadUser();setAuthMode('signup');show('settings');$('#authEmail').focus()}catch(e){toast(e.message)}};
 $('#deleteAccount').onclick=async()=>{if(!state.user){toast('Sign in first');return}if(!confirm('Delete this workspace and its stored scheduler data? This cannot be undone.'))return;try{await api('/api/auth/user?action=delete',{method:'DELETE'});await loadUser();toast('Workspace deleted')}catch(e){toast(e.message)}};
 
-async function loadStatus(){try{const s=await api('/api/pinterest?action=status');state.productionConnected=!!s.productionConnected;state.sandboxConnected=!!s.sandboxConnected;$('#connectionDot').classList.toggle('on',state.productionConnected);$('#connectionText').textContent=state.productionConnected?'Connected':'Not connected';$('#pinterestIntegration').textContent=state.productionConnected?'Connected':'Not connected';$('#pinterestIntegration').className='status-chip '+(state.productionConnected?'good':'warn');$('#pinterestSetting').textContent=state.productionConnected?'Connected':'Not connected';$('#pinterestSetting').className='status-chip '+(state.productionConnected?'good':'warn');$('#sandboxIntegration').textContent=state.sandboxConnected?'Connected':'Optional';$('#sandboxIntegration').className='status-chip '+(state.sandboxConnected?'good':'');if(state.productionConnected)await loadBoards();else{$('#board').innerHTML='<option value="">Connect Pinterest first…</option>';$('#publish').disabled=true;$('#schedulePin').disabled=true}updateOnboarding()}catch(e){$('#connectionText').textContent='Unavailable'}}
+async function loadStatus(){
+  $('#connectionText').textContent='Checking connection…';
+  try{
+    const s=await api('/api/pinterest?action=status',{},9000);state.productionConnected=!!s.productionConnected;state.sandboxConnected=!!s.sandboxConnected;
+    $('#connectionDot').classList.toggle('on',state.productionConnected);$('#connectionText').textContent=state.productionConnected?'Connected':'Not connected';
+    $('#pinterestIntegration').textContent=state.productionConnected?'Connected':'Not connected';$('#pinterestIntegration').className='status-chip '+(state.productionConnected?'good':'warn');
+    $('#pinterestSetting').textContent=state.productionConnected?'Connected':'Not connected';$('#pinterestSetting').className='status-chip '+(state.productionConnected?'good':'warn');
+    if($('#sandboxIntegration')){$('#sandboxIntegration').textContent=state.sandboxConnected?'Connected':'Optional';$('#sandboxIntegration').className='status-chip '+(state.sandboxConnected?'good':'')}
+    if(!state.productionConnected){$('#board').innerHTML='<option value="">Connect Pinterest first…</option>';$('#publish').disabled=true;$('#schedulePin').disabled=true}
+    updateOnboarding();return state.productionConnected
+  }catch(e){$('#connectionText').textContent='Connection check delayed';$('#pinterestSetting').textContent='Retry';$('#pinterestSetting').className='status-chip warn';return false}
+}
 async function loadAccount(){if(!state.productionConnected)return;try{const d=await api('/api/pinterest?action=account');if(d.account?.username){$('#connectionText').textContent='@'+d.account.username;$('#accountAction').textContent=state.user?state.user.email:'@'+d.account.username}}catch{}}
 async function loadBoards(force=false){if(state.boards.length&&!force){renderBoards();return state.boards}if(!state.productionConnected)return[];try{const d=await api('/api/pinterest?action=boards');state.boards=d.boards||[];renderBoards();return state.boards}catch(e){$('#boardNotice').className='notice error';$('#boardNotice').textContent=e.message;return[]}}
 function renderBoards(){const opts=state.boards.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name||b.id)+'</option>').join('');$('#board').innerHTML=opts||'<option value="">No Boards returned</option>';$('#publish').disabled=!state.boards.length;$('#schedulePin').disabled=!state.boards.length;$('#boardCount').textContent=String(state.boards.length);$('#boardList').innerHTML=state.boards.map(b=>'<div class="board-card"><strong>'+esc(b.name||'Untitled Board')+'</strong><p>'+esc(b.description||'No description')+'</p><small>'+esc(b.privacy||'')+(b.pin_count!=null?' · '+compact(b.pin_count)+' Pins':'')+'</small></div>').join('')||'<div class="empty-state">No Boards returned.</div>';$('#pinBoardFilter').innerHTML='<option value="">All Boards</option>'+state.boards.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name||b.id)+'</option>').join('')}
@@ -71,7 +144,23 @@ function pinImage(p){
 function pinMetrics(p){const pm=p?.pin_metrics||{};return pm['90d']||pm['30d']||pm.lifetime_metrics||pm.summary_metrics||pm.all_time||pm||{}}
 function metric(m,key){return Number(m?.[key]??m?.[key.toLowerCase()]??0)}
 function boardName(id){return state.boards.find(b=>String(b.id)===String(id))?.name||'Pinterest Board'}
-async function loadAllPins(){if(!state.productionConnected){$('#libraryNotice').textContent='Connect Pinterest to load your library.';return}state.pins=[];let bookmark='',page=0;$('#libraryNotice').className='notice';$('#libraryNotice').textContent='Loading your authorized Pin library…';try{do{const d=await api('/api/pinterest?action=pins'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));state.pins.push(...(d.pins||[]));bookmark=d.bookmark||'';page++;$('#pinLoadProgress').textContent=fmt.format(state.pins.length)+' loaded';renderPinLibrary();renderDashboardPins();if(page>1000)throw new Error('Stopped after 250,000 Pins for browser safety.')}while(bookmark);$('#libraryNotice').className='notice success';$('#libraryNotice').textContent='Loaded '+fmt.format(state.pins.length)+' Pins from the authorized Pinterest account using API pagination.';$('#heroPins').textContent=fmt.format(state.pins.length);updateOnboarding();renderTopPins()}catch(e){$('#libraryNotice').className='notice error';$('#libraryNotice').textContent=e.message}}
+async function loadPinPreview(limit=24){
+  if(!state.productionConnected)return[];
+  try{
+    const d=await api('/api/pinterest?action=pins&page_size='+Math.min(100,Math.max(6,Number(limit)||24)),{},15000);
+    if(!state.fullLibraryLoaded){
+      const map=new Map(state.pins.map(p=>[String(p.id),p]));(d.pins||[]).forEach(p=>map.set(String(p.id),p));state.pins=[...map.values()]
+    }
+    renderDashboardPins();renderTopPins();$('#heroPins').textContent=state.fullLibraryLoaded?fmt.format(state.pins.length):(state.pins.length?fmt.format(state.pins.length)+'+':'0');
+    return d.pins||[]
+  }catch(e){return[]}
+}
+async function loadDashboardPinterest(){
+  if(!state.productionConnected)return;
+  if($('#dashboardChartEmpty'))$('#dashboardChartEmpty').textContent='Loading 30-day analytics…';
+  await Promise.allSettled([loadAnalytics(false),loadPinPreview(24)])
+}
+async function loadAllPins(){if(state.fullLibraryLoading)return;if(!state.productionConnected){$('#libraryNotice').textContent='Connect Pinterest to load your library.';return}state.fullLibraryLoading=true;state.pins=[];let bookmark='',page=0;$('#libraryNotice').className='notice';$('#libraryNotice').textContent='Loading your authorized Pin library…';try{do{const d=await api('/api/pinterest?action=pins'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));state.pins.push(...(d.pins||[]));bookmark=d.bookmark||'';page++;$('#pinLoadProgress').textContent=fmt.format(state.pins.length)+' loaded';renderPinLibrary();renderDashboardPins();if(page>1000)throw new Error('Stopped after 250,000 Pins for browser safety.')}while(bookmark);$('#libraryNotice').className='notice success';$('#libraryNotice').textContent='Loaded '+fmt.format(state.pins.length)+' Pins from the authorized Pinterest account using API pagination.';$('#heroPins').textContent=fmt.format(state.pins.length);state.fullLibraryLoaded=true;updateOnboarding();renderTopPins()}catch(e){$('#libraryNotice').className='notice error';$('#libraryNotice').textContent=e.message}finally{state.fullLibraryLoading=false}}
 function renderPinLibrary(){const q=$('#pinSearch').value.trim().toLowerCase(),board=$('#pinBoardFilter').value,sort=$('#pinSort').value;let items=state.pins.filter(p=>(!board||String(p.board_id)===board)&&(!q||String(p.title||'').toLowerCase().includes(q)||String(p.description||'').toLowerCase().includes(q)));items=items.slice();if(sort!=='newest')items.sort((a,b)=>{const ma=pinMetrics(a),mb=pinMetrics(b),k=sort==='impressions'?'IMPRESSION':sort==='saves'?'SAVE':'OUTBOUND_CLICK';return metric(mb,k)-metric(ma,k)});$('#pinGrid').innerHTML=items.map(p=>{const m=pinMetrics(p),img=pinImage(p);return '<article class="pin-card"><div class="pin-image" '+(img?'style="background-image:url(&quot;'+esc(img)+'&quot;)"':'')+'><span class="board-pill">'+esc(boardName(p.board_id))+'</span></div><div class="pin-copy"><h3>'+esc(p.title||'Untitled Pin')+'</h3><div class="pin-stats"><div class="pin-stat"><small>Impressions</small><strong>'+compact(metric(m,'IMPRESSION'))+'</strong></div><div class="pin-stat"><small>Saves</small><strong>'+compact(metric(m,'SAVE'))+'</strong></div><div class="pin-stat"><small>Pin clicks</small><strong>'+compact(metric(m,'PIN_CLICK'))+'</strong></div><div class="pin-stat"><small>Outbound</small><strong>'+compact(metric(m,'OUTBOUND_CLICK'))+'</strong></div></div><div class="pin-links"><a href="https://www.pinterest.com/pin/'+esc(p.id)+'/" target="_blank" rel="noopener">Open on Pinterest</a>'+(p.link?'<a href="'+esc(p.link)+'" target="_blank" rel="noopener">Destination</a>':'')+'</div></div></article>'}).join('')||'<div class="empty-state">No Pins match this filter.</div>'}
 function renderDashboardPins(){const items=state.pins.slice(0,6);$('#dashboardPins').innerHTML=items.map(p=>{const m=pinMetrics(p),img=pinImage(p);return '<div class="mini-pin-card"><div class="image" '+(img?'style="background-image:url(&quot;'+esc(img)+'&quot;)"':'')+'></div><div class="copy"><strong>'+esc(p.title||'Untitled Pin')+'</strong><small>'+compact(metric(m,'IMPRESSION'))+' impressions</small></div></div>'}).join('')||'<div class="empty-state">No Pins loaded.</div>';if(items[0]){const img=pinImage(items[0]);$('#heroPinImage').style.backgroundImage=img?'url("'+img.replace(/"/g,'%22')+'")':'';$('#heroPinTitle').textContent=items[0].title||'Visual analytics'}}
 $('#reloadPins').onclick=loadAllPins;$('#pinSearch').oninput=renderPinLibrary;$('#pinBoardFilter').onchange=renderPinLibrary;$('#pinSort').onchange=renderPinLibrary;
@@ -215,6 +304,19 @@ async function refreshSettings(){await loadUser();await loadStatus()}
 $('#disconnectPinterest').onclick=async()=>{if(!confirm('Disconnect Pinterest from this browser?'))return;try{await post('/api/pinterest?action=disconnect',{});state.productionConnected=false;await loadStatus();toast('Pinterest disconnected from this browser')}catch(e){toast(e.message)}};
 
 async function quietDue(){if(!state.user)return;try{const d=await post('/api/schedule?action=run-due',{});if(d.processed)await loadSchedule()}catch{}}
-async function init(){setDefaultSchedule();updatePreview();await Promise.all([loadUser(),loadStatus(),loadAI()]);await loadAccount();if(state.productionConnected){await Promise.all([loadAnalytics(true),loadAllPins()])}await loadSchedule();await syncCheckout();const q=new URLSearchParams(location.search);if(q.get('recovered')){await loadUser();show('settings');$('#authNotice').className='notice success';$('#authNotice').textContent='Owner recovered through the previously linked Pinterest account. Set a new password below.';toast('Owner account recovered')}else if(q.get('recover')==='failed'){show('settings');$('#authNotice').className='notice error';$('#authNotice').textContent='Recovery failed. This Pinterest account does not match a previously linked owner workspace.'}else if(q.get('verified')){await loadUser();show('settings');toast('Email verified successfully')}else if(q.get('signup')){show('settings');authMode='signup';$$('.auth-tab').forEach(x=>x.classList.toggle('active',x.dataset.auth==='signup'));$('#authSubmit').textContent='Create account';$('#authPassword').autocomplete='new-password'}else if(q.get('login')){show('settings')}else if(q.get('oauth')){show(q.get('oauth')==='sandbox-connected'?'integrations':'create');if(state.user&&q.get('oauth')==='connected')toast('Pinterest connected. Scheduler authorization saved for this workspace.')}setInterval(quietDue,60000)}
+async function init(){
+  setDefaultSchedule();updatePreview();setAuthMode('login');
+  const q=new URLSearchParams(location.search);
+  await loadUser();
+  if(q.get('recovered')){show('settings');$('#authNotice').className='notice success';$('#authNotice').textContent='Owner recovered through the previously linked Pinterest account. Set a new Studio password below.';toast('Owner account recovered')}
+  else if(q.get('recover')==='failed'){show('settings');$('#authNotice').className='notice error';$('#authNotice').textContent='Recovery failed. This Pinterest account does not match a previously linked owner workspace.'}
+  else if(q.get('verified')){show('settings');toast('Email verified successfully')}
+  else if(q.get('signup')){show('settings');if(state.user){$('#signupSessionNotice').classList.remove('hidden')}else{setAuthMode('signup');$('#authEmail').focus()}}
+  else if(q.get('login')){show('settings');if(!state.user){setAuthMode('login');$('#authEmail').focus()}}
+  else if(q.get('oauth')){show(q.get('oauth')==='sandbox-connected'?'integrations':'create');if(state.user&&q.get('oauth')==='connected')toast('Pinterest connected. Your Pinterest password was never shared with Decor Areas Studio.')}
+  loadAI();loadSchedule();syncCheckout();
+  loadStatus().then(async connected=>{if(connected){loadAccount();loadDashboardPinterest()}});
+  setInterval(quietDue,60000)
+}
 window.addEventListener('resize',()=>{if(state.analytics){drawLine($('#dashboardChart'),state.analytics.series,$('#dashboardChartEmpty'),'IMPRESSION',false);drawLine($('#analyticsChart'),state.analytics.series,$('#analyticsChartEmpty'),state.analyticsMetric||'IMPRESSION',true)}});
 init();
