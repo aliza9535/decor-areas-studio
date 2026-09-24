@@ -16,10 +16,37 @@ function planFromPrice(id){
   if(id&&id===process.env.STRIPE_PRICE_STARTER) return 'starter';
   return 'free';
 }
+function formatPrice(p){
+  if(!p) return null;
+  return {amount:p.unit_amount,currency:p.currency,interval:p.recurring?.interval||null,interval_count:p.recurring?.interval_count||1};
+}
+async function configuredPrices(s){
+  const out={};
+  for(const plan of ['starter','pro','agency']){
+    const id=priceId(plan);
+    if(!id) continue;
+    try{out[plan]=formatPrice(await s.prices.retrieve(id))}catch{}
+  }
+  return out;
+}
+async function syncExisting(sql,s,user){
+  if(!user?.stripe_subscription_id) return user?.plan||'free';
+  try{
+    const sub=await s.subscriptions.retrieve(user.stripe_subscription_id);
+    const plan=['active','trialing'].includes(sub.status)?planFromPrice(sub.items?.data?.[0]?.price?.id):'free';
+    if(plan!==user.plan) await sql`update app_users set plan=${plan} where id=${user.id}`;
+    return plan;
+  }catch{return user.plan||'free'}
+}
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   const user=await getSessionUser(req);
-  if(req.method==='GET') return res.status(200).json({ok:true,databaseConfigured:dbConfigured(),stripeConfigured:configured(),user:user?{email:user.email,plan:user.plan}:null});
+  if(req.method==='GET'){
+    if(!configured()) return res.status(200).json({ok:true,databaseConfigured:dbConfigured(),stripeConfigured:false,prices:{},user:user?{email:user.email,plan:user.plan}:null});
+    const s=stripe();let plan=user?.plan||'free';
+    if(user&&dbConfigured()){await ensureSchema();plan=await syncExisting(getDb(),s,user)}
+    return res.status(200).json({ok:true,databaseConfigured:dbConfigured(),stripeConfigured:true,prices:await configuredPrices(s),user:user?{email:user.email,plan}:null});
+  }
   if(!trustedPost(req)) return res.status(403).json({error:'Cross-site request rejected'});
   if(!user) return res.status(401).json({error:'Sign in before managing a paid plan.'});
   if(!configured()) return res.status(503).json({error:'Billing is not connected yet.'});
@@ -45,12 +72,8 @@ export default async function handler(req,res){
       customer=typeof session.customer==='string'?session.customer:session.customer?.id||customer;
       const sub=typeof session.subscription==='string'?await s.subscriptions.retrieve(session.subscription):session.subscription;
       subscription=sub?.id||subscription;
-      const active=sub&&['active','trialing'].includes(sub.status);
-      plan=active?planFromPrice(sub.items?.data?.[0]?.price?.id):'free';
-    }else if(subscription){
-      const sub=await s.subscriptions.retrieve(subscription);
-      plan=['active','trialing'].includes(sub.status)?planFromPrice(sub.items?.data?.[0]?.price?.id):'free';
-    }
+      plan=sub&&['active','trialing'].includes(sub.status)?planFromPrice(sub.items?.data?.[0]?.price?.id):'free';
+    }else plan=await syncExisting(sql,s,user);
     await sql`update app_users set plan=${plan},stripe_customer_id=${customer||null},stripe_subscription_id=${subscription||null} where id=${user.id}`;
     return res.status(200).json({ok:true,plan});
   }

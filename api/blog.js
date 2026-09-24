@@ -44,6 +44,7 @@ function titleOf(html){return meta(html,'og:title')||decode((html.match(/<title[
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   const raw=String(req.query.url||'').trim();
+  if(String(req.query.authorized||'')!=='true') return res.status(400).json({error:'Confirm that you own or are authorized to use this article before importing it.'});
   if(!raw) return res.status(400).json({error:'Paste a public article URL.'});
   try{
     const {response,url}=await safeFetch(raw);

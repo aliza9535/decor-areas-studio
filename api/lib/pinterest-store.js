@@ -36,6 +36,13 @@ export async function upsertPinterestAccount(userId,data){
       updated_at=now()`;
   return true;
 }
+export async function deletePinterestAccount(userId){
+  if(!dbConfigured()) return false;
+  await ensureSchema();
+  const sql=getDb();
+  await sql`delete from pinterest_accounts where user_id=${userId}`;
+  return true;
+}
 export async function getPinterestAccount(userId){
   if(!dbConfigured()) return null;
   await ensureSchema();
@@ -65,7 +72,10 @@ export async function getFreshAccessToken(userId){
     where user_id=${userId}`;
   return d.access_token;
 }
+function validHttpUrl(value){try{const u=new URL(String(value));return u.protocol==='https:'||u.protocol==='http:'}catch{return false}}
 export async function publishStoredPin(userId,pin){
+  if(pin.image_url&&!validHttpUrl(pin.image_url)) throw new Error('Scheduled image URL is invalid.');
+  if(pin.destination&&!validHttpUrl(pin.destination)) throw new Error('Scheduled destination URL is invalid.');
   const token=await getFreshAccessToken(userId);
   const media_source=pin.image_url
     ?{source_type:'image_url',url:String(pin.image_url),is_standard:true}

@@ -4,6 +4,7 @@ import {getSessionUser,trustedPost} from './lib/auth.js';
 
 const LIMITS={free:10,starter:100,pro:500,agency:2000};
 function safe(v,n){return String(v||'').trim().slice(0,n)}
+function validHttpUrl(value){if(!value)return true;try{const u=new URL(String(value));return u.protocol==='https:'||u.protocol==='http:'}catch{return false}}
 async function gapConflict(sql,userId,when,ignoreId=''){
   const rows=ignoreId
     ?await sql`select id,scheduled_at,title from scheduled_pins where user_id=${userId} and status='scheduled' and id<>${ignoreId}
@@ -33,6 +34,7 @@ export default async function handler(req,res){
     if(!b.board_id||!safe(b.title,100)) return res.status(400).json({error:'Board and title are required.'});
     if(Number.isNaN(when.getTime())||when.getTime()<Date.now()+5*60000) return res.status(400).json({error:'Choose a publishing time at least 5 minutes in the future.'});
     if(!b.image_data&&!b.image_url) return res.status(400).json({error:'Choose an image or use an imported article image.'});
+    if(!validHttpUrl(b.destination)||!validHttpUrl(b.image_url)) return res.status(400).json({error:'Destination and hosted image URLs must use http:// or https://.'});
     if(b.image_data&&String(b.image_data).length>2900000) return res.status(413).json({error:'Scheduled uploads must be under about 2 MB. Use a smaller image or a hosted image URL.'});
     const count=(await sql`select count(*)::int as n from scheduled_pins where user_id=${user.id} and status='scheduled'`)[0]?.n||0;
     const cap=LIMITS[user.plan]||LIMITS.free;

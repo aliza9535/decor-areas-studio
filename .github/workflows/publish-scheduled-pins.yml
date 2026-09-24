@@ -1,0 +1,29 @@
+name: Publish scheduled Pinterest Pins
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request short-lived GitHub OIDC token
+        shell: bash
+        run: |
+          TOKEN_JSON=$(curl --fail --silent --show-error \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=decor-areas-studio-scheduler")
+          TOKEN=$(echo "$TOKEN_JSON" | jq -r '.value')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "Could not obtain scheduler identity token."
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $TOKEN" \
+            https://studio.decorareas.com/api/cron/publish
