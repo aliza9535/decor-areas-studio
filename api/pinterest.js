@@ -1,3 +1,5 @@
+import {getSessionUser} from './lib/auth.js';
+import {getFreshAccessToken,getPinterestAccount} from './lib/pinterest-store.js';
 import crypto from 'crypto';
 
 const PROD='https://api.pinterest.com/v5';
@@ -22,7 +24,7 @@ async function parse(r){let d={};try{d=await r.json()}catch{};return d}
 function fail(out,res,fallback='Pinterest API request failed'){return res.status(out.status||502).json({ok:false,error:out.data?.message||out.data?.error||fallback})}
 
 async function refreshAccess(req,res,env){const c=cookies(req),names=authNames(env),refresh=unseal(c[names.refresh]),id=process.env.PINTEREST_APP_ID,secret=process.env.PINTEREST_APP_SECRET;if(!refresh||!id||!secret)return null;const r=await fetch(oauthEndpoint(env),{method:'POST',headers:{Authorization:'Basic '+Buffer.from(id+':'+secret).toString('base64'),'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh})});const d=await parse(r);if(!r.ok||!d.access_token)return null;const lines=[authCookie(names.access,seal(d.access_token,secret),d.expires_in||2592000)];if(d.refresh_token)lines.push(authCookie(names.refresh,seal(d.refresh_token,secret),d.refresh_token_expires_in||5184000));appendCookies(res,lines);return d.access_token}
-async function token(req,res,env){const c=cookies(req),names=authNames(env),access=unseal(c[names.access]);if(access)return access;return refreshAccess(req,res,env)}
+async function token(req,res,env){const c=cookies(req),names=authNames(env),access=unseal(c[names.access]);if(access)return access;const refreshed=await refreshAccess(req,res,env);if(refreshed)return refreshed;if(env==='production'){try{const user=await getSessionUser(req);if(user)return await getFreshAccessToken(user.id)}catch{}}return null}
 async function pinterest(req,res,env,path,opt={}){let t=await token(req,res,env);if(!t)return{ok:false,status:401,data:{message:'Pinterest OAuth is not connected'}};const run=async tok=>{const r=await fetch(base(env)+path,{...opt,headers:{Authorization:'Bearer '+tok,Accept:'application/json',...(opt.headers||{})}});return{ok:r.ok,status:r.status,data:await parse(r)}};let out=await run(t);if(out.status===401){const next=await refreshAccess(req,res,env);if(next)out=await run(next)}return out}
 function validHttpUrl(value){if(!value)return true;try{const u=new URL(value);return u.protocol==='https:'||u.protocol==='http:'}catch{return false}}
 
@@ -30,7 +32,7 @@ export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   const action=String(req.query.action||''),c=cookies(req);
 
-  if(action==='status')return res.status(200).json({ok:true,standardAccess:true,productionConnected:!!(c.da_access||c.da_refresh),sandboxConnected:!!(c.da_sandbox_access||c.da_sandbox_refresh),appConfigured:!!process.env.PINTEREST_APP_ID&&!!process.env.PINTEREST_APP_SECRET});
+  if(action==='status'){let dbConnected=false;try{const user=await getSessionUser(req);if(user)dbConnected=!!(await getPinterestAccount(user.id))}catch{}return res.status(200).json({ok:true,standardAccess:true,productionConnected:!!(c.da_access||c.da_refresh)||dbConnected,sandboxConnected:!!(c.da_sandbox_access||c.da_sandbox_refresh),appConfigured:!!process.env.PINTEREST_APP_ID&&!!process.env.PINTEREST_APP_SECRET,workspaceConnected:dbConnected});}
 
   if(action==='disconnect'){
     if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});
