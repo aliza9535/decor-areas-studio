@@ -1,9 +1,6 @@
 {
   "cleanUrls": true,
   "trailingSlash": true,
-  "crons": [
-    {"path": "/api/cron/publish", "schedule": "*/5 * * * *"}
-  ],
   "headers": [
     {
       "source": "/(.*)",
