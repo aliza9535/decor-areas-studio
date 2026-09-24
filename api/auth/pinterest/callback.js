@@ -1,5 +1,5 @@
-import {getSessionUser} from '../../lib/auth.js';
-import {upsertPinterestAccount} from '../../lib/pinterest-store.js';
+import {getSessionUser} from '../../../server/auth.js';
+import {upsertPinterestAccount} from '../../../server/pinterest-store.js';
 import crypto from 'crypto';
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.indexOf('=');return i<0?[x,'']:[decodeURIComponent(x.slice(0,i)),decodeURIComponent(x.slice(i+1))]}))}
 function origin(req){if(process.env.APP_ORIGIN)return process.env.APP_ORIGIN.replace(/\/$/,'');const host=req.headers['x-forwarded-host']||req.headers.host;const proto=req.headers['x-forwarded-proto']||'https';return proto+'://'+host}
