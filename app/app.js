@@ -11,7 +11,7 @@ function compact(v){const n=Number(v||0);return n>=1e6?(n/1e6).toFixed(1)+'M':n>
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2600)}
 async function api(url,opt){const r=await fetch(url,opt);let d={};try{d=await r.json()}catch{};if(!r.ok){const e=new Error(d.error||('HTTP '+r.status));e.status=r.status;e.data=d;throw e}return d}
 function post(url,body){return api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})})}
-function show(name){$$('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===name));$$('.page').forEach(p=>p.classList.remove('active'));$('#page-'+name)?.classList.add('active');const m=PAGE_META[name]||[name,''];$('#pageTitle').textContent=m[0];$('#pageSubtitle').textContent=m[1];$('.sidebar')?.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});if(name==='analytics')loadAnalytics();if(name==='library'&&!state.pins.length)loadAllPins();if(name==='scheduler')loadSchedule();if(name==='integrations')loadIntegrations();if(name==='plans')loadBilling();if(name==='settings')refreshSettings();if(name==='boards')loadBoards(true)}
+function show(name){$$('.nav').forEach(b=>b.classList.toggle('active',b.dataset.page===name));$$('.page').forEach(p=>p.classList.remove('active'));$('#page-'+name)?.classList.add('active');const m=PAGE_META[name]||[name,''];$('#pageTitle').textContent=m[0];$('#pageSubtitle').textContent=m[1];$('.sidebar')?.classList.remove('open');window.scrollTo({top:0,behavior:'smooth'});if(name==='analytics')loadAnalytics();if(name==='library'&&!state.pins.length)loadAllPins();if(name==='scheduler')loadSchedule();if(name==='blog')loadWebsites();if(name==='integrations')loadIntegrations();if(name==='plans')loadBilling();if(name==='settings')refreshSettings();if(name==='boards')loadBoards(true)}
 $$('.nav,.jump').forEach(b=>b.onclick=()=>show(b.dataset.page));$('#mobileMenu').onclick=()=>$('.sidebar').classList.toggle('open');$('#accountAction').onclick=()=>show('settings');
 
 async function loadUser(){try{const d=await api('/api/auth/user?action=me');state.dbConfigured=!!d.configured;state.user=d.user||null}catch{state.dbConfigured=false;state.user=null}
@@ -94,11 +94,30 @@ $$('.checkout').forEach(b=>b.onclick=async()=>{if(!state.user){show('settings');
 $('#manageBilling').onclick=async()=>{if(!state.user){show('settings');return}try{const d=await post('/api/billing?action=portal',{});location.href=d.url}catch(e){toast(e.message)}};
 async function syncCheckout(){const q=new URLSearchParams(location.search),session=q.get('session_id');if(q.get('checkout')==='success'&&session){try{const d=await post('/api/billing?action=sync',{session_id:session});toast('Plan activated: '+d.plan);history.replaceState({},'',location.pathname);await loadUser();await loadBilling();show('plans')}catch(e){toast(e.message)}}}
 
-async function loadIntegrations(){await Promise.all([loadUser(),loadStatus(),loadAI(),loadBilling()])}
+async function loadWebsites(){
+  const box=$('#websiteList');if(!box)return;
+  if(!state.user){box.innerHTML='<div class="empty-state">Sign in to save a website connection.</div>';$('#websiteStatus').textContent='Sign in required';$('#websiteStatus').className='status-chip warn';return}
+  try{
+    const d=await api('/api/websites');const sites=d.sites||[];
+    $('#websiteStatus').textContent=sites.length?(sites.length+' saved'):'Optional';$('#websiteStatus').className='status-chip '+(sites.length?'good':'');
+    box.innerHTML=sites.map(s=>'<div class="queue-item"><div class="queue-thumb" style="display:grid;place-items:center;background:#f2efff;color:#6847dc;font-weight:900">WP</div><div><strong>'+esc(s.site_name||s.site_url)+'</strong><small>'+esc(s.site_url)+'</small></div><div class="button-row"><button class="text-btn use-site" data-url="'+esc(s.site_url)+'">Use</button><button class="text-btn remove-site" data-id="'+esc(s.id)+'">Remove</button></div></div>').join('')||'<div class="empty-state">No website saved yet.</div>';
+    $('.use-site').forEach(b=>b.onclick=()=>{$('#wpSite').value=b.dataset.url;toast('Website selected — click Load posts')});
+    $('.remove-site').forEach(b=>b.onclick=async()=>{if(!confirm('Remove this saved website connection?'))return;try{await api('/api/websites?id='+encodeURIComponent(b.dataset.id),{method:'DELETE'});await loadWebsites()}catch(e){toast(e.message)}});
+  }catch(e){box.innerHTML='<div class="empty-state">'+esc(e.message)+'</div>'}
+}
+$('#connectWebsite').onclick=async()=>{
+  if(!state.user){show('settings');toast('Sign in before saving a website');return}
+  const url=$('#websiteConnectUrl').value.trim(),confirmed=$('#websiteConfirmed').checked;
+  if(!url){toast('Enter your public WordPress site URL');return}
+  if(!confirmed){toast('Confirm you own or are authorized to use this site');return}
+  try{const d=await post('/api/websites',{site_url:url,site_name:new URL(url.startsWith('http')?url:'https://'+url).hostname,kind:'wordpress-public',confirmed:true});$('#wpSite').value=d.site_url||url;$('#websiteConnectUrl').value='';$('#websiteConfirmed').checked=false;await loadWebsites();toast('Website saved. You can now load its published posts.')}catch(e){toast(e.message)}
+};
+
+async function loadIntegrations(){await Promise.all([loadUser(),loadStatus(),loadAI(),loadBilling(),loadWebsites()])}
 async function refreshSettings(){await loadUser();await loadStatus()}
 $('#disconnectPinterest').onclick=async()=>{if(!confirm('Disconnect Pinterest from this browser?'))return;try{await post('/api/pinterest?action=disconnect',{});state.productionConnected=false;await loadStatus();toast('Pinterest disconnected from this browser')}catch(e){toast(e.message)}};
 
 async function quietDue(){if(!state.user)return;try{const d=await post('/api/schedule?action=run-due',{});if(d.processed)await loadSchedule()}catch{}}
-async function init(){setDefaultSchedule();updatePreview();await Promise.all([loadUser(),loadStatus(),loadAI(),loadBilling()]);await loadAccount();if(state.productionConnected){await Promise.all([loadAnalytics(true),loadAllPins()])}await loadSchedule();await syncCheckout();const q=new URLSearchParams(location.search);if(q.get('oauth')){show(q.get('oauth')==='sandbox-connected'?'integrations':'create');if(state.user&&q.get('oauth')==='connected')toast('Pinterest connected. Scheduler authorization saved for this workspace.')}setInterval(quietDue,60000)}
+async function init(){setDefaultSchedule();updatePreview();await Promise.all([loadUser(),loadStatus(),loadAI(),loadBilling()]);await loadAccount();if(state.productionConnected){await Promise.all([loadAnalytics(true),loadAllPins()])}await loadSchedule();await syncCheckout();const q=new URLSearchParams(location.search);if(q.get('signup')){show('settings');authMode='signup';$('.auth-tab').forEach(x=>x.classList.toggle('active',x.dataset.auth==='signup'));$('#authSubmit').textContent='Create account';$('#authPassword').autocomplete='new-password'}else if(q.get('login')){show('settings')}else if(q.get('oauth')){show(q.get('oauth')==='sandbox-connected'?'integrations':'create');if(state.user&&q.get('oauth')==='connected')toast('Pinterest connected. Scheduler authorization saved for this workspace.')}setInterval(quietDue,60000)}
 window.addEventListener('resize',()=>{if(state.analytics){drawLine($('#dashboardChart'),state.analytics.series,$('#dashboardChartEmpty'));drawLine($('#analyticsChart'),state.analytics.series,$('#analyticsChartEmpty'))}});
 init();
