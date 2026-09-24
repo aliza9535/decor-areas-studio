@@ -1,5 +1,5 @@
-import {getDb,ensureSchema,dbConfigured} from '../lib/db.js';
-import {publishStoredPin} from '../lib/pinterest-store.js';
+import {getDb,ensureSchema,dbConfigured} from '../../server/db.js';
+import {publishStoredPin} from '../../server/pinterest-store.js';
 
 export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
