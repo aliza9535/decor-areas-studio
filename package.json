@@ -1,5 +1,9 @@
 {
   "name": "decor-areas-studio",
   "private": true,
-  "version": "1.0.0"
+  "version": "2.0.0",
+  "dependencies": {
+    "postgres": "^3.4.7",
+    "stripe": "^18.5.0"
+  }
 }
