@@ -3,8 +3,9 @@ import {getDb,ensureSchema,dbConfigured} from './lib/db.js';
 import {getSessionUser,trustedPost} from './lib/auth.js';
 
 function origin(req){
-  if(process.env.APP_ORIGIN) return process.env.APP_ORIGIN.replace(/\/$/,'');
   const host=req.headers['x-forwarded-host']||req.headers.host,proto=req.headers['x-forwarded-proto']||'https';
+  if(process.env.VERCEL_ENV==='preview') return proto+'://'+host;
+  if(process.env.APP_ORIGIN) return process.env.APP_ORIGIN.replace(/\/$/,'');
   return proto+'://'+host;
 }
 function configured(){return !!process.env.STRIPE_SECRET_KEY}
