@@ -51,6 +51,7 @@ export async function ensureSchema(){
     alt_text text,
     image_data text,
     image_url text,
+    image_thumb text,
     content_type text,
     file_name text,
     scheduled_at timestamptz not null,
@@ -61,6 +62,7 @@ export async function ensureSchema(){
     published_at timestamptz,
     created_at timestamptz not null default now()
   )`;
+  await sql`alter table scheduled_pins add column if not exists image_thumb text`;
   await sql`create index if not exists scheduled_pins_due_idx on scheduled_pins(status,scheduled_at)`;
   await sql`create index if not exists scheduled_pins_user_idx on scheduled_pins(user_id,scheduled_at)`;
   await sql`create table if not exists website_connections (
