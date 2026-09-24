@@ -15,7 +15,7 @@ export default async function handler(req,res){res.setHeader('Cache-Control','no
   if(action==='disconnect'){if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});if(!trustedPost(req))return res.status(403).json({error:'Cross-site request rejected'});const names=['da_access','da_refresh','da_sandbox_access','da_sandbox_refresh','da_oauth_state','da_oauth_env','da_oauth_redirect'];res.setHeader('Set-Cookie',names.map(n=>`${n}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax`));return res.status(200).json({ok:true});}
   if(action==='oauth'){
     const id=process.env.PINTEREST_APP_ID;if(!id)return res.status(500).json({error:'PINTEREST_APP_ID is not configured'});
-    const env=req.query.env==='sandbox'?'sandbox':'production',state=crypto.randomBytes(24).toString('hex'),redirect=redirectUri(req),scope=env==='sandbox'?'user_accounts:read,boards:read,boards:write,pins:read,pins:write':'user_accounts:read,boards:read,pins:read,pins:write';
+    const env=req.query.env==='sandbox'?'sandbox':'production',state=crypto.randomBytes(24).toString('hex'),redirect=redirectUri(req),scope='user_accounts:read,boards:read,boards:write,pins:read,pins:write';
     res.setHeader('Set-Cookie',[`da_oauth_state=${state}; Max-Age=600; Path=/; HttpOnly; Secure; SameSite=Lax`,`da_oauth_env=${env}; Max-Age=600; Path=/; HttpOnly; Secure; SameSite=Lax`,`da_oauth_redirect=${encodeURIComponent(redirect)}; Max-Age=600; Path=/; HttpOnly; Secure; SameSite=Lax`]);
     return res.redirect(302,'https://www.pinterest.com/oauth/?client_id='+encodeURIComponent(id)+'&redirect_uri='+encodeURIComponent(redirect)+'&response_type=code&scope='+encodeURIComponent(scope)+'&state='+encodeURIComponent(state));
   }
