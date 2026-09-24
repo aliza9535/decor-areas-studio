@@ -22,6 +22,17 @@ export default async function handler(req,res){res.setHeader('Cache-Control','no
   if(action==='account'){
     const token=prodToken(req);if(!token)return res.status(401).json({error:'Pinterest API access is not connected'});const r=await get(PROD+'/user_account',token);if(!r.ok)return fail(r,res);return res.status(200).json({ok:true,account:{username:r.data?.username||null,account_type:r.data?.account_type||null}});
   }
+  if(action==='boards'){
+    const token=prodToken(req);if(!token)return res.status(401).json({error:'Pinterest OAuth is not connected'});
+    let boards=[],bookmark=null,pages=0;
+    do{
+      const url=PROD+'/boards?page_size=100'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):'');
+      const page=await get(url,token);if(!page.ok)return fail(page,res,'Could not load Pinterest Boards');
+      if(Array.isArray(page.data?.items))boards.push(...page.data.items);
+      bookmark=page.data?.bookmark||null;pages++;
+    }while(bookmark&&pages<20);
+    return res.status(200).json({ok:true,boards});
+  }
   if(action==='analytics'){
     const token=prodToken(req);if(!token)return res.status(401).json({error:'Pinterest API access is not connected'});const end=new Date(),start=new Date(Date.now()-29*86400000),ymd=d=>d.toISOString().slice(0,10),common='start_date='+ymd(start)+'&end_date='+ymd(end)+'&from_claimed_content=BOTH&pin_format=ALL&app_types=ALL&content_type=ALL&source=ALL';
     const [a,tp]=await Promise.all([get(PROD+'/user_account/analytics?'+common+'&split_field=NO_SPLIT',token),get(PROD+'/user_account/analytics/top_pins?'+common+'&sort_by=IMPRESSION&metric_types=IMPRESSION,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT&num_of_pins=10',token)]);if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');const first=Object.values(a.data||{}).find(v=>v&&typeof v==='object'&&v.summary_metrics)||{};return res.status(200).json({ok:true,summary:first.summary_metrics||{},topPins:tp.ok?(tp.data?.pins||[]):[]});
