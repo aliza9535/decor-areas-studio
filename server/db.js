@@ -13,6 +13,20 @@ export async function ensureSchema(){
   const sql=getDb();
   if(!sql) return false;
   if(schemaReady) return true;
+  try{
+    const ready=await sql`select
+      to_regclass('public.app_users') is not null as users,
+      to_regclass('public.app_sessions') is not null as sessions,
+      to_regclass('public.pinterest_accounts') is not null as pinterest,
+      to_regclass('public.scheduled_pins') is not null as schedule,
+      to_regclass('public.website_connections') is not null as websites,
+      to_regclass('public.app_settings') is not null as settings,
+      to_regclass('public.email_verifications') is not null as verifications,
+      exists(select 1 from information_schema.columns where table_schema='public' and table_name='app_users' and column_name='email_verified_at') as verified_col,
+      exists(select 1 from information_schema.columns where table_schema='public' and table_name='scheduled_pins' and column_name='image_thumb') as thumb_col`;
+    const r=ready[0];
+    if(r&&r.users&&r.sessions&&r.pinterest&&r.schedule&&r.websites&&r.settings&&r.verifications&&r.verified_col&&r.thumb_col){schemaReady=true;return true}
+  }catch{}
   await sql`create table if not exists app_users (
     id text primary key,
     email text unique not null,
