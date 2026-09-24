@@ -12,10 +12,10 @@ async function validate(raw){
   const addrs=await dns.lookup(u.hostname,{all:true});if(!addrs.length||addrs.some(a=>isPrivate(a.address)))throw new Error('Private network addresses are not supported.');
   return u;
 }
-async function safeFetch(raw,depth=0){
+async function safeFetch(raw,depth=0,extraHeaders={}){
   if(depth>3)throw new Error('Too many redirects.');
-  const u=await validate(raw),r=await fetch(u,{redirect:'manual',headers:{'User-Agent':'DecorAreasStudio/3.0 (+https://studio.decorareas.com)'},signal:AbortSignal.timeout(12000)});
-  if([301,302,303,307,308].includes(r.status)){const loc=r.headers.get('location');if(!loc)throw new Error('Redirect had no location.');return safeFetch(new URL(loc,u).toString(),depth+1)}
+  const u=await validate(raw),r=await fetch(u,{redirect:'manual',headers:{'User-Agent':'DecorAreasStudio/3.0 (+https://studio.decorareas.com)',...extraHeaders},signal:AbortSignal.timeout(12000)});
+  if([301,302,303,307,308].includes(r.status)){const loc=r.headers.get('location');if(!loc)throw new Error('Redirect had no location.');const next=new URL(loc,u);const headers=next.origin===u.origin?extraHeaders:{};return safeFetch(next.toString(),depth+1,headers)}
   if(!r.ok)throw new Error('Could not fetch this page (HTTP '+r.status+').');
   const len=Number(r.headers.get('content-length')||0);if(len>3000000)throw new Error('Page is too large to import.');
   return {response:r,url:u.toString()};
@@ -40,12 +40,26 @@ export default async function handler(req,res){
       return res.status(200).json({ok:true,content_type:type.split(';')[0],data:buf.toString('base64')});
     }
     if(action==='wordpress'){
-      const raw=String(req.query.site||'').trim();if(!raw)return res.status(400).json({error:'Enter your WordPress site URL.'});
-      const root=await validate(raw.startsWith('http')?raw:'https://'+raw),endpoint=new URL('/wp-json/wp/v2/posts',root);
-      endpoint.searchParams.set('per_page',String(Math.min(50,Math.max(1,Number(req.query.limit)||24))));endpoint.searchParams.set('_embed','1');endpoint.searchParams.set('status','publish');
-      const {response}=await safeFetch(endpoint.toString());const posts=await response.json();
-      if(!Array.isArray(posts))throw new Error('This site did not return the standard WordPress posts feed.');
-      return res.status(200).json({ok:true,site:root.origin,posts:posts.map(p=>({id:p.id,title:decode(p.title?.rendered||''),excerpt:decode(p.excerpt?.rendered||''),url:p.link,image:imageFromPost(p),date:p.date||null})).filter(p=>p.url)});
+      const body=req.method==='POST'?(req.body||{}):req.query,raw=String(body.site||'').trim();if(!raw)return res.status(400).json({error:'Enter your WordPress site URL.'});
+      const root=await validate(raw.startsWith('http')?raw:'https://'+raw),limit=Math.min(50,Math.max(1,Number(body.limit)||24)),mode=String(body.mode||'public'),authenticated=mode==='authenticated';
+      let headers={},username='',appPassword='';
+      if(authenticated){
+        username=String(body.username||'').trim().slice(0,160);appPassword=String(body.app_password||'').trim().slice(0,300);
+        if(!username||!appPassword)return res.status(400).json({error:'Enter the WordPress username and an Application Password.'});
+        headers.Authorization='Basic '+Buffer.from(username+':'+appPassword).toString('base64')
+      }
+      const statuses=authenticated?['publish','draft','private','pending','future']:['publish'],all=[];
+      for(const status of statuses){
+        const endpoint=new URL('/wp-json/wp/v2/posts',root);endpoint.searchParams.set('per_page',String(limit));endpoint.searchParams.set('_embed','1');endpoint.searchParams.set('status',status);if(authenticated)endpoint.searchParams.set('context','edit');
+        try{
+          const {response}=await safeFetch(endpoint.toString(),0,headers);
+          if(response.status===401||response.status===403)throw new Error('WordPress rejected the username or Application Password.');
+          const posts=await response.json();if(Array.isArray(posts))for(const p of posts)if(!all.some(x=>String(x.id)===String(p.id)))all.push(p)
+        }catch(e){if(status==='publish'||/rejected/i.test(String(e.message)))throw e}
+        if(all.length>=limit)break
+      }
+      const posts=all.slice(0,limit).map(p=>({id:p.id,title:decode(p.title?.rendered||p.title?.raw||''),excerpt:decode(p.excerpt?.rendered||p.excerpt?.raw||''),url:p.link,image:imageFromPost(p),date:p.date||null,status:p.status||'publish'})).filter(p=>p.url);
+      return res.status(200).json({ok:true,site:root.origin,mode:authenticated?'authenticated':'public',posts});
     }
     const raw=String(req.query.url||'').trim();if(!raw)return res.status(400).json({error:'Paste a public article URL.'});
     const {response,url}=await safeFetch(raw),type=String(response.headers.get('content-type')||'');if(!type.includes('text/html'))return res.status(400).json({error:'This URL is not an HTML article page.'});

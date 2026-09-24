@@ -26,6 +26,18 @@ function fail(out,res,fallback='Pinterest API request failed'){return res.status
 async function refreshAccess(req,res,env){const c=cookies(req),names=authNames(env),refresh=unseal(c[names.refresh]),id=process.env.PINTEREST_APP_ID,secret=process.env.PINTEREST_APP_SECRET;if(!refresh||!id||!secret)return null;const r=await fetch(oauthEndpoint(env),{method:'POST',headers:{Authorization:'Basic '+Buffer.from(id+':'+secret).toString('base64'),'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:refresh}),signal:AbortSignal.timeout(12000)});const d=await parse(r);if(!r.ok||!d.access_token)return null;const lines=[authCookie(names.access,seal(d.access_token,secret),d.expires_in||2592000)];if(d.refresh_token)lines.push(authCookie(names.refresh,seal(d.refresh_token,secret),d.refresh_token_expires_in||5184000));appendCookies(res,lines);return d.access_token}
 async function token(req,res,env){const c=cookies(req),names=authNames(env),access=unseal(c[names.access]);if(access)return access;const refreshed=await refreshAccess(req,res,env);if(refreshed)return refreshed;if(env==='production'){try{const user=await getSessionUser(req);if(user)return await getFreshAccessToken(user.id)}catch{}}return null}
 async function pinterest(req,res,env,path,opt={}){let t=await token(req,res,env);if(!t)return{ok:false,status:401,data:{message:'Pinterest OAuth is not connected'}};const run=async tok=>{try{const r=await fetch(base(env)+path,{...opt,headers:{Authorization:'Bearer '+tok,Accept:'application/json',...(opt.headers||{})},signal:opt.signal||AbortSignal.timeout(15000)});return{ok:r.ok,status:r.status,data:await parse(r)}}catch(e){return{ok:false,status:504,data:{message:e?.name==='TimeoutError'?'Pinterest API timed out. Please retry.':(e?.message||'Pinterest API request failed')}}}};let out=await run(t);if(out.status===401){const next=await refreshAccess(req,res,env);if(next)out=await run(next)}return out}
+function bestImage(pin){
+  const images=pin?.media?.images||{};
+  const preferred=[images?.['1200x']?.url,images?.['600x']?.url,images?.['400x300']?.url,images?.['150x150']?.url,images?.originals?.url,pin?.media?.image?.url];
+  return preferred.find(v=>/^https?:\/\//i.test(String(v||'')))||null
+}
+function normalizePin(pin){return pin&&typeof pin==='object'?{...pin,image_url:bestImage(pin)}:pin}
+function analyticsSummary(data){
+  if(!data||typeof data!=='object')return{};
+  if(data.summary_metrics)return data.summary_metrics;
+  const found=Object.values(data).find(v=>v&&typeof v==='object'&&v.summary_metrics);
+  return found?.summary_metrics||{}
+}
 function validHttpUrl(value){if(!value)return true;try{const u=new URL(value);return u.protocol==='https:'||u.protocol==='http:'}catch{return false}}
 
 export default async function handler(req,res){
@@ -63,7 +75,15 @@ export default async function handler(req,res){
   }
 
   if(action==='pins'){
-    const bookmark=req.query.bookmark?String(req.query.bookmark):'',pageSize=Math.min(250,Math.max(1,Number(req.query.page_size)||250));const out=await pinterest(req,res,'production','/pins?page_size='+pageSize+'&pin_metrics=true'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));if(!out.ok)return fail(out,res,'Could not load Pinterest Pins');return res.status(200).json({ok:true,pins:out.data?.items||[],bookmark:out.data?.bookmark||null});
+    const bookmark=req.query.bookmark?String(req.query.bookmark):'',pageSize=Math.min(250,Math.max(1,Number(req.query.page_size)||250));const out=await pinterest(req,res,'production','/pins?page_size='+pageSize+'&pin_metrics=true'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));if(!out.ok)return fail(out,res,'Could not load Pinterest Pins');return res.status(200).json({ok:true,pins:(out.data?.items||[]).map(normalizePin),bookmark:out.data?.bookmark||null});
+  }
+
+  if(action==='pin-detail'){
+    const id=String(req.query.id||'').trim();if(!id)return res.status(400).json({error:'Pin ID is required'});
+    const out=await pinterest(req,res,'production','/pins/'+encodeURIComponent(id)+'?pin_metrics=true');if(!out.ok)return fail(out,res,'Could not load Pin details');
+    const end=new Date(),start=new Date(Date.now()-89*86400000),ymd=d=>d.toISOString().slice(0,10),metrics='IMPRESSION,ENGAGEMENT,SAVE,PIN_CLICK,OUTBOUND_CLICK';
+    const analytics=await pinterest(req,res,'production','/pins/'+encodeURIComponent(id)+'/analytics?start_date='+ymd(start)+'&end_date='+ymd(end)+'&app_types=ALL&split_field=NO_SPLIT&metric_types='+encodeURIComponent(metrics));
+    return res.status(200).json({ok:true,pin:normalizePin(out.data),detail_metrics:analytics.ok?analyticsSummary(analytics.data):{}});
   }
 
   if(action==='delete-pin'){
@@ -71,9 +91,11 @@ export default async function handler(req,res){
   }
 
   if(action==='analytics'){
-    const days=Math.min(90,Math.max(7,Number(req.query.days)||30)),end=new Date(),start=new Date(Date.now()-(days-1)*86400000),ymd=d=>d.toISOString().slice(0,10),metrics='IMPRESSION,ENGAGEMENT,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT_RATE,SAVE_RATE,PIN_CLICK_RATE,OUTBOUND_CLICK_RATE,TOTAL_AUDIENCE,ENGAGED_AUDIENCE,MONTHLY_TOTAL_AUDIENCE,MONTHLY_ENGAGED_AUDIENCE,MONTHLY_VIEWS',common='start_date='+ymd(start)+'&end_date='+ymd(end)+'&from_claimed_content=BOTH&pin_format=ALL&app_types=ALL&content_type=ALL&source=ALL&metric_types='+encodeURIComponent(metrics);
-    const a=await pinterest(req,res,'production','/user_account/analytics?'+common+'&split_field=NO_SPLIT');if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');
-    const tp=await pinterest(req,res,'production','/user_account/analytics/top_pins?'+common+'&sort_by=IMPRESSION&metric_types=IMPRESSION,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT&num_of_pins=50');
+    const days=Math.min(90,Math.max(7,Number(req.query.days)||30)),end=new Date(),start=new Date(Date.now()-(days-1)*86400000),ymd=d=>d.toISOString().slice(0,10);
+    const metrics='IMPRESSION,ENGAGEMENT,SAVE,PIN_CLICK,OUTBOUND_CLICK,ENGAGEMENT_RATE,SAVE_RATE,PIN_CLICK_RATE,OUTBOUND_CLICK_RATE';
+    const filters='start_date='+ymd(start)+'&end_date='+ymd(end)+'&from_claimed_content=BOTH&pin_format=ALL&app_types=ALL&content_type=ALL&source=ALL';
+    const a=await pinterest(req,res,'production','/user_account/analytics?'+filters+'&split_field=NO_SPLIT&metric_types='+encodeURIComponent(metrics));if(!a.ok)return fail(a,res,'Pinterest analytics unavailable');
+    const tp=await pinterest(req,res,'production','/user_account/analytics/top_pins?'+filters+'&sort_by=IMPRESSION&metric_types='+encodeURIComponent('IMPRESSION,ENGAGEMENT,SAVE,PIN_CLICK,OUTBOUND_CLICK')+'&num_of_pins=50');
     const first=Object.values(a.data||{}).find(v=>v&&typeof v==='object'&&(v.summary_metrics||v.daily_metrics))||{};
     return res.status(200).json({ok:true,days,summary:first.summary_metrics||{},series:first.daily_metrics||[],topPins:tp.ok?(tp.data?.pins||[]):[]});
   }

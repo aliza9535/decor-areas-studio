@@ -124,23 +124,35 @@
     </section>
 
     <section class="page" id="page-blog">
-      <div class="page-heading"><div><span class="eyebrow">BLOG → PIN</span><h1>Turn posts into reviewed Pin campaigns</h1><p>Connect a public WordPress site or import one article URL. Select a post, generate options, then choose exactly what to publish.</p></div></div>
-      <article class="panel website-connect">
-  <div class="panel-head"><div><span class="kicker">WEBSITE CONNECTION</span><h2>Save a public WordPress site</h2></div><span class="status-chip" id="websiteStatus">Optional</span></div>
-  <p class="muted">For public published posts, no plugin, WordPress username, application password, or admin login is required. Enter the public site URL and confirm you own or are authorized to use its content. Private/draft WordPress content is not requested by this build.</p>
-  <div class="url-row"><input id="websiteConnectUrl" type="url" placeholder="https://yourwordpresssite.com"><button class="secondary" id="connectWebsite">Save website</button></div>
-  <label class="approval"><input type="checkbox" id="websiteConfirmed"><span>I own this site or am authorized to use its published content in Decor Areas Studio.</span></label>
-  <div id="websiteList" class="website-list"><div class="empty-state">No website saved yet.</div></div>
-</article>
-<div class="blog-source-grid">
-        <article class="panel"><span class="kicker">WORDPRESS</span><h2>Load latest published posts</h2><p class="muted">Uses the public WordPress REST feed for the site you enter. No Pinterest scraping.</p><div class="url-row"><input id="wpSite" type="url" placeholder="https://yourwordpresssite.com"><button class="primary" id="loadWp">Load posts</button></div><div class="notice subtle" id="wpNotice">Up to 24 recent published posts will appear below.</div></article>
-        <article class="panel"><span class="kicker">SINGLE ARTICLE</span><h2>Import one URL</h2><p class="muted">Reads the page title, description, canonical URL and Open Graph image.</p><div class="url-row"><input id="articleUrl" type="url" placeholder="https://your-site.com/post"><button class="secondary" id="importArticle">Import</button></div><div class="notice subtle" id="articleNotice">Use content you own or are authorized to publish.</div></article>
+      <div class="page-heading"><div><span class="eyebrow">BLOG → PIN</span><h1>Connect a site, choose a post, then create.</h1><p>A simple three-step workflow. Public WordPress posts need only the site URL. Private or draft posts can use a WordPress Application Password for that import request.</p></div></div>
+
+      <div class="blog-step-grid">
+        <article class="panel wp-connect-card">
+          <div class="panel-head"><div><span class="step-label">STEP 1</span><h2>Connect WordPress</h2></div><span class="status-chip" id="wpConnectionStatus">Not connected</span></div>
+          <div class="form-grid two"><label>WordPress site URL<input id="wpSite" type="url" placeholder="https://yourwebsite.com"></label><label>Access<select id="wpAccessMode"><option value="public">Public published posts — no login</option><option value="authenticated">Private/drafts — Application Password</option></select></label></div>
+          <div id="wpAuthFields" class="form-grid two hidden"><label>WordPress username<input id="wpUsername" autocomplete="username" placeholder="WordPress username"></label><label>Application Password<input id="wpAppPassword" type="password" autocomplete="off" placeholder="xxxx xxxx xxxx xxxx"></label></div>
+          <label class="approval"><input type="checkbox" id="wpAuthorized"><span>I own this site or I am authorized to use its content.</span></label>
+          <div class="wp-actions"><button class="primary" id="loadWp">Connect & load posts</button><label class="remember-check"><input type="checkbox" id="wpRemember" checked><span>Remember this website URL</span></label></div>
+          <div class="notice subtle" id="wpNotice">Public mode does not need a plugin, username or password. Authenticated mode uses a WordPress Application Password only for this import request; the password is not saved.</div>
+          <div class="saved-sites"><strong>Saved websites</strong><div id="websiteList"><div class="empty-state">No website URL saved yet.</div></div></div>
+        </article>
+
+        <article class="panel article-import-card">
+          <div class="panel-head"><div><span class="step-label">OR</span><h2>Import one article</h2></div></div>
+          <p class="muted">Paste a public article URL. Decor Areas Studio reads its public title, description, canonical URL and Open Graph image.</p>
+          <div class="url-row"><input id="articleUrl" type="url" placeholder="https://yourwebsite.com/article"><button class="secondary" id="importArticle">Import article</button></div>
+          <div class="notice subtle" id="articleNotice">Use content you own or are authorized to publish.</div>
+        </article>
       </div>
-      <div class="panel"><div class="panel-head"><div><span class="kicker">CONTENT LIBRARY</span><h2>Your latest posts</h2></div><span id="wpCount" class="count-pill">0 posts</span></div><div id="wpPosts" class="post-grid"><div class="empty-state">Connect a WordPress site or import a single article.</div></div></div>
-      <div class="blog-workflow">
-        <article class="panel selected-article"><div class="panel-head"><div><span class="kicker">SELECTED ARTICLE</span><h2 id="selectedArticleTitle">No article selected</h2></div></div><div id="selectedArticleImage" class="article-hero"></div><p id="selectedArticleSummary" class="muted">Select a post above.</p><small id="selectedArticleUrl"></small></article>
-        <article class="panel"><div class="panel-head"><div><span class="kicker">GENERATE</span><h2>Create options</h2></div></div><div class="form-grid two"><label>Tone<select id="blogTone"><option>Helpful</option><option>Editorial</option><option>Friendly</option><option>Minimal</option></select></label><label>Audience<input id="blogAudience" placeholder="home decor readers"></label></div><button class="primary" id="blogGenerate">Generate Pin pack</button><div id="blogVariants" class="variant-grid"></div><div class="button-row"><button class="secondary" id="useBlogTemplate">Generate visual from article image</button><button class="secondary" id="useBlogAiImage">Generate AI visual</button></div><div class="notice subtle" id="blogGenerateNotice">You choose the final title, image, Board and schedule before anything is sent to Pinterest.</div></article>
-      </div>
+
+      <article class="panel blog-library-panel">
+        <div class="panel-head"><div><span class="step-label">STEP 2</span><h2>Choose a post</h2><p class="muted">Click any post to open its preview and publishing actions.</p></div><span id="wpCount" class="count-pill">0 posts</span></div>
+        <div id="wpPosts" class="post-grid"><div class="empty-state">Connect WordPress or import a single article to begin.</div></div>
+      </article>
+
+      <article class="panel blog-next-step">
+        <span class="step-label">STEP 3</span><div><h2>Create the Pin</h2><p>After selecting a post, open it in Create Studio. There you can edit or AI-generate title/description, upload or generate an image, choose the exact Board, destination URL and alt text, then publish or schedule.</p></div><button class="secondary jump" data-page="create">Open Create Studio</button>
+      </article>
     </section>
 
     <section class="page" id="page-scheduler">
@@ -158,7 +170,7 @@
     </section>
 
     <section class="page" id="page-analytics">
-      <div class="page-heading"><div><span class="eyebrow">ORGANIC ANALYTICS</span><h1>Performance</h1><p>Interactive metrics for the authorized Pinterest account. Hover the chart to inspect each day.</p></div><div class="button-row"><select id="analyticsRange"><option value="30">30 days</option><option value="7">7 days</option><option value="90">90 days</option></select><button class="secondary" id="refreshAnalytics">Refresh</button></div></div>
+      <div class="page-heading"><div><span class="eyebrow">ORGANIC ANALYTICS</span><h1>Performance</h1><p>Interactive organic metrics for the authorized Pinterest account. Hover the chart to inspect an exact day.</p></div><div class="button-row"><select id="analyticsRange"><option value="30">30 days</option><option value="7">7 days</option><option value="90">90 days</option></select><button class="secondary" id="refreshAnalytics">Refresh</button></div></div>
       <div class="notice" id="analyticsNotice">Connect Pinterest to load analytics.</div>
       <div class="metric-grid analytics-metrics">
         <article class="metric-card"><span class="metric-icon">◉</span><div><small>Impressions</small><strong id="metricImpressions">—</strong></div></article>
@@ -177,13 +189,12 @@
         <button class="metric-toggle" data-metric="SAVE_RATE">Save rate</button>
         <button class="metric-toggle" data-metric="PIN_CLICK_RATE">Pin click rate</button>
         <button class="metric-toggle" data-metric="OUTBOUND_CLICK_RATE">Outbound rate</button>
-        <button class="metric-toggle" data-metric="TOTAL_AUDIENCE">Total audience</button>
-        <button class="metric-toggle" data-metric="ENGAGED_AUDIENCE">Engaged audience</button>
-        <button class="metric-toggle" data-metric="MONTHLY_VIEWS">Monthly views</button>
-        <button class="metric-toggle disabled" disabled title="Sales/conversion reporting requires separate ads/conversion access">Sales</button>
       </div>
       <article class="panel chart-panel"><div class="panel-head"><div><span class="kicker">TREND</span><h2 id="analyticsChartTitle">Impressions over time</h2></div><span class="status-chip" id="analyticsHoverHint">Hover chart for daily value</span></div><div class="chart-wrap interactive"><canvas id="analyticsChart"></canvas><div class="chart-empty" id="analyticsChartEmpty">Daily trend will appear here.</div><div class="chart-tooltip hidden" id="analyticsTooltip"></div></div></article>
-      <article class="panel recent-panel"><div class="panel-head"><div><span class="kicker">TOP CONTENT</span><h2>Top Pins with visuals</h2></div><span class="muted">Up to 50 from Pinterest analytics</span></div><div id="topPinCards" class="performance-grid"><div class="empty-state">Load analytics and your Pin library.</div></div></article>
+      <div class="analytics-lower-grid">
+        <article class="panel audience-gate"><div class="panel-head"><div><span class="kicker">AUDIENCE DEMOGRAPHICS</span><h2>Audience Insights</h2></div><span class="status-chip warn">Separate permission</span></div><p>Pinterest Audience Insights is a different API path tied to a business advertiser account. It requires additional ads read authorization. Decor Areas Studio does not silently request that broader permission from every user.</p><div class="notice subtle">Your organic analytics above are fully separate and remain available with the current Pinterest connection.</div></article>
+        <article class="panel recent-panel"><div class="panel-head"><div><span class="kicker">TOP CONTENT</span><h2>Top Pins with visuals</h2></div><span class="muted">Up to 50 from Pinterest analytics</span></div><div id="topPinCards" class="performance-grid"><div class="empty-state">Load analytics and your Pin library.</div></div></article>
+      </div>
     </section>
 
     <section class="page" id="page-boards">
@@ -271,6 +282,39 @@
     </section>
   </main>
 </div>
+<div class="modal-backdrop hidden" id="pinModal" aria-hidden="true">
+  <div class="detail-modal pin-detail-modal" role="dialog" aria-modal="true" aria-labelledby="pinModalTitle">
+    <button class="modal-close" id="pinModalClose" aria-label="Close">×</button>
+    <div class="pin-detail-layout">
+      <div class="pin-detail-visual" id="pinModalVisual"><span>Loading image…</span></div>
+      <div class="pin-detail-content">
+        <span class="kicker">PIN DETAILS</span><h2 id="pinModalTitle">Loading…</h2><p id="pinModalDescription" class="muted"></p>
+        <div class="detail-meta"><div><small>Board</small><strong id="pinModalBoard">—</strong></div><div><small>Created</small><strong id="pinModalCreated">—</strong></div></div>
+        <div class="pin-detail-metrics" id="pinModalMetrics"></div>
+        <div class="button-row"><a class="secondary link-button" id="pinModalPinterest" target="_blank" rel="noopener">Open on Pinterest</a><a class="secondary link-button hidden" id="pinModalDestination" target="_blank" rel="noopener">Open destination</a></div>
+        <button class="primary wide" id="pinUseCreate">Use this Pin in Create Studio</button>
+        <div class="notice subtle">This copies your selected Pin's editable fields into Create Studio. It does not automatically send Pinterest API data to AI.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="articleModal" aria-hidden="true">
+  <div class="detail-modal article-detail-modal" role="dialog" aria-modal="true" aria-labelledby="articleModalTitle">
+    <button class="modal-close" id="articleModalClose" aria-label="Close">×</button>
+    <div class="article-modal-grid">
+      <div class="article-modal-image" id="articleModalImage"><span>No image found</span></div>
+      <div class="article-modal-copy"><span class="kicker">SELECTED ARTICLE</span><h2 id="articleModalTitle">Article</h2><p id="articleModalSummary" class="muted"></p><a id="articleModalSource" target="_blank" rel="noopener" class="article-source-link">Open original article ↗</a></div>
+    </div>
+    <div class="article-actions">
+      <button class="primary" id="articleUseManual">Open in Create Studio</button>
+      <button class="secondary" id="articleUseAI">Generate AI title & description</button>
+      <button class="secondary" id="articleUseAIImage">Prepare AI image</button>
+    </div>
+    <div class="workflow-hint"><span>1. Select article</span><i>→</i><span>2. Edit/generate copy & image</span><i>→</i><span>3. Choose Board + link + alt text</span><i>→</i><span>4. Publish or schedule</span></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script src="/app/app.js"></script>
 </body>

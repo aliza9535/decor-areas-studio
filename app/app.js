@@ -129,28 +129,23 @@ $('#generateBoardCopy').onclick=async()=>{const topic=$('#boardTopic').value.tri
 $('#createBoard').onclick=async()=>{const name=$('#newBoardName').value.trim(),description=$('#newBoardDescription').value.trim(),n=$('#boardNotice');if(!name){n.className='notice error';n.textContent='Enter a Board name.';return}if(!confirm('Create this exact Board on the connected Pinterest account?'))return;try{await post('/api/pinterest?action=create-board',{name,description});n.className='notice success';n.textContent='Board created.';$('#newBoardName').value='';$('#newBoardDescription').value='';state.boards=[];await loadBoards(true)}catch(e){n.className='notice error';n.textContent=e.message}};
 
 function pinImage(p){
-  const preferred=[p?.media?.images?.originals?.url,p?.media?.images?.['1200x']?.url,p?.media?.images?.['600x']?.url,p?.media?.images?.['400x300']?.url,p?.media?.image?.url,p?.media_source?.url,p?.image?.url];
+  const images=p?.media?.images||{};
+  const preferred=[p?.image_url,images?.originals?.url,images?.['1200x']?.url,images?.['600x']?.url,images?.['400x300']?.url,images?.['150x150']?.url,p?.media?.image?.url,p?.media_source?.url,p?.image?.url];
   for(const v of preferred)if(/^https?:\/\//i.test(String(v||'')))return v;
-  const seen=new Set();
-  function walk(v,path='',depth=0){
-    if(v==null||depth>7)return'';
-    if(typeof v==='string'&&/^https?:\/\//i.test(v)&&/(image|media|url|src|cover|thumbnail|original)/i.test(path))return v;
-    if(typeof v!=='object'||seen.has(v))return'';seen.add(v);
-    for(const [k,x] of Object.entries(v)){const found=walk(x,path+'.'+k,depth+1);if(found)return found}
-    return'';
-  }
-  return walk(p);
+  return''
 }
-function pinMetrics(p){const pm=p?.pin_metrics||{};return pm['90d']||pm['30d']||pm.lifetime_metrics||pm.summary_metrics||pm.all_time||pm||{}}
+function rawPinMetrics(p){const pm=p?.pin_metrics||{};return pm['90d']||pm['30d']||pm.lifetime_metrics||pm.summary_metrics||pm.all_time||pm||{}}
+function topPinMetrics(p){const t=state.analytics?.topPins?.find(x=>String(x.pin_id)===String(p?.id));return t?.metrics||null}
+function pinMetrics(p){return topPinMetrics(p)||rawPinMetrics(p)}
 function metric(m,key){return Number(m?.[key]??m?.[key.toLowerCase()]??0)}
+function hasMetric(m,key){return m!=null&&(Object.prototype.hasOwnProperty.call(m,key)||Object.prototype.hasOwnProperty.call(m,key.toLowerCase()))}
+function pinMetricText(m,key){return hasMetric(m,key)?compact(metric(m,key)):'—'}
 function boardName(id){return state.boards.find(b=>String(b.id)===String(id))?.name||'Pinterest Board'}
 async function loadPinPreview(limit=24){
   if(!state.productionConnected)return[];
   try{
     const d=await api('/api/pinterest?action=pins&page_size='+Math.min(100,Math.max(6,Number(limit)||24)),{},15000);
-    if(!state.fullLibraryLoaded){
-      const map=new Map(state.pins.map(p=>[String(p.id),p]));(d.pins||[]).forEach(p=>map.set(String(p.id),p));state.pins=[...map.values()]
-    }
+    if(!state.fullLibraryLoaded){const map=new Map(state.pins.map(p=>[String(p.id),p]));(d.pins||[]).forEach(p=>map.set(String(p.id),p));state.pins=[...map.values()]}
     renderDashboardPins();renderTopPins();$('#heroPins').textContent=state.fullLibraryLoaded?fmt.format(state.pins.length):(state.pins.length?fmt.format(state.pins.length)+'+':'0');
     return d.pins||[]
   }catch(e){return[]}
@@ -160,12 +155,54 @@ async function loadDashboardPinterest(){
   if($('#dashboardChartEmpty'))$('#dashboardChartEmpty').textContent='Loading 30-day analytics…';
   await Promise.allSettled([loadAnalytics(false),loadPinPreview(24)])
 }
-async function loadAllPins(){if(state.fullLibraryLoading)return;if(!state.productionConnected){$('#libraryNotice').textContent='Connect Pinterest to load your library.';return}state.fullLibraryLoading=true;state.pins=[];let bookmark='',page=0;$('#libraryNotice').className='notice';$('#libraryNotice').textContent='Loading your authorized Pin library…';try{do{const d=await api('/api/pinterest?action=pins'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''));state.pins.push(...(d.pins||[]));bookmark=d.bookmark||'';page++;$('#pinLoadProgress').textContent=fmt.format(state.pins.length)+' loaded';renderPinLibrary();renderDashboardPins();if(page>1000)throw new Error('Stopped after 250,000 Pins for browser safety.')}while(bookmark);$('#libraryNotice').className='notice success';$('#libraryNotice').textContent='Loaded '+fmt.format(state.pins.length)+' Pins from the authorized Pinterest account using API pagination.';$('#heroPins').textContent=fmt.format(state.pins.length);state.fullLibraryLoaded=true;updateOnboarding();renderTopPins()}catch(e){$('#libraryNotice').className='notice error';$('#libraryNotice').textContent=e.message}finally{state.fullLibraryLoading=false}}
-function renderPinLibrary(){const q=$('#pinSearch').value.trim().toLowerCase(),board=$('#pinBoardFilter').value,sort=$('#pinSort').value;let items=state.pins.filter(p=>(!board||String(p.board_id)===board)&&(!q||String(p.title||'').toLowerCase().includes(q)||String(p.description||'').toLowerCase().includes(q)));items=items.slice();if(sort!=='newest')items.sort((a,b)=>{const ma=pinMetrics(a),mb=pinMetrics(b),k=sort==='impressions'?'IMPRESSION':sort==='saves'?'SAVE':'OUTBOUND_CLICK';return metric(mb,k)-metric(ma,k)});$('#pinGrid').innerHTML=items.map(p=>{const m=pinMetrics(p),img=pinImage(p);return '<article class="pin-card"><div class="pin-image" '+(img?'style="background-image:url(&quot;'+esc(img)+'&quot;)"':'')+'><span class="board-pill">'+esc(boardName(p.board_id))+'</span></div><div class="pin-copy"><h3>'+esc(p.title||'Untitled Pin')+'</h3><div class="pin-stats"><div class="pin-stat"><small>Impressions</small><strong>'+compact(metric(m,'IMPRESSION'))+'</strong></div><div class="pin-stat"><small>Saves</small><strong>'+compact(metric(m,'SAVE'))+'</strong></div><div class="pin-stat"><small>Pin clicks</small><strong>'+compact(metric(m,'PIN_CLICK'))+'</strong></div><div class="pin-stat"><small>Outbound</small><strong>'+compact(metric(m,'OUTBOUND_CLICK'))+'</strong></div></div><div class="pin-links"><a href="https://www.pinterest.com/pin/'+esc(p.id)+'/" target="_blank" rel="noopener">Open on Pinterest</a>'+(p.link?'<a href="'+esc(p.link)+'" target="_blank" rel="noopener">Destination</a>':'')+'</div></div></article>'}).join('')||'<div class="empty-state">No Pins match this filter.</div>'}
-function renderDashboardPins(){const items=state.pins.slice(0,6);$('#dashboardPins').innerHTML=items.map(p=>{const m=pinMetrics(p),img=pinImage(p);return '<div class="mini-pin-card"><div class="image" '+(img?'style="background-image:url(&quot;'+esc(img)+'&quot;)"':'')+'></div><div class="copy"><strong>'+esc(p.title||'Untitled Pin')+'</strong><small>'+compact(metric(m,'IMPRESSION'))+' impressions</small></div></div>'}).join('')||'<div class="empty-state">No Pins loaded.</div>';if(items[0]){const img=pinImage(items[0]);$('#heroPinImage').style.backgroundImage=img?'url("'+img.replace(/"/g,'%22')+'")':'';$('#heroPinTitle').textContent=items[0].title||'Visual analytics'}}
-$('#reloadPins').onclick=loadAllPins;$('#pinSearch').oninput=renderPinLibrary;$('#pinBoardFilter').onchange=renderPinLibrary;$('#pinSort').onchange=renderPinLibrary;
+async function loadAllPins(){
+  if(state.fullLibraryLoading)return;
+  if(!state.productionConnected){$('#libraryNotice').textContent='Connect Pinterest to load your library.';return}
+  state.fullLibraryLoading=true;state.pins=[];let bookmark='',page=0;$('#libraryNotice').className='notice';$('#libraryNotice').textContent='Loading your authorized Pin library…';
+  try{
+    do{
+      const d=await api('/api/pinterest?action=pins'+(bookmark?'&bookmark='+encodeURIComponent(bookmark):''),{},18000);
+      state.pins.push(...(d.pins||[]));bookmark=d.bookmark||'';page++;$('#pinLoadProgress').textContent=fmt.format(state.pins.length)+' loaded';renderPinLibrary();renderDashboardPins();
+      if(page>1000)throw new Error('Stopped after 250,000 Pins for browser safety.')
+    }while(bookmark);
+    $('#libraryNotice').className='notice success';$('#libraryNotice').textContent='Loaded '+fmt.format(state.pins.length)+' Pins from your authorized Pinterest account.';$('#heroPins').textContent=fmt.format(state.pins.length);state.fullLibraryLoaded=true;updateOnboarding();renderTopPins()
+  }catch(e){$('#libraryNotice').className='notice error';$('#libraryNotice').textContent=e.message}
+  finally{state.fullLibraryLoading=false}
+}
+function renderPinLibrary(){
+  const q=$('#pinSearch').value.trim().toLowerCase(),board=$('#pinBoardFilter').value,sort=$('#pinSort').value;
+  let items=state.pins.filter(p=>(!board||String(p.board_id)===board)&&(!q||String(p.title||'').toLowerCase().includes(q)||String(p.description||'').toLowerCase().includes(q)));
+  items=items.slice();if(sort!=='newest')items.sort((a,b)=>{const ma=pinMetrics(a),mb=pinMetrics(b),k=sort==='impressions'?'IMPRESSION':sort==='saves'?'SAVE':'OUTBOUND_CLICK';return metric(mb,k)-metric(ma,k)});
+  $('#pinGrid').innerHTML=items.map(p=>{const m=pinMetrics(p),img=pinImage(p);return '<article class="pin-card pin-open" data-pin-id="'+esc(p.id)+'" tabindex="0" role="button" aria-label="Open Pin details"><div class="pin-image">'+(img?'<img loading="lazy" src="'+esc(img)+'" alt="'+esc(p.alt_text||p.title||'Pinterest Pin')+'">':'<div class="pin-image-missing">Image unavailable</div>')+'<span class="board-pill">'+esc(boardName(p.board_id))+'</span></div><div class="pin-copy"><h3>'+esc(p.title||'Untitled Pin')+'</h3><div class="pin-stats"><div class="pin-stat"><small>Impressions</small><strong>'+pinMetricText(m,'IMPRESSION')+'</strong></div><div class="pin-stat"><small>Saves</small><strong>'+pinMetricText(m,'SAVE')+'</strong></div><div class="pin-stat"><small>Pin clicks</small><strong>'+pinMetricText(m,'PIN_CLICK')+'</strong></div><div class="pin-stat"><small>Outbound</small><strong>'+pinMetricText(m,'OUTBOUND_CLICK')+'</strong></div></div><div class="pin-links"><span>Click for details</span></div></div></article>'}).join('')||'<div class="empty-state">No Pins match this filter.</div>';
+  $$('.pin-open').forEach(card=>{card.onclick=()=>openPinDetail(card.dataset.pinId);card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPinDetail(card.dataset.pinId)}}})
+}
+function renderDashboardPins(){
+  const items=state.pins.slice(0,6);
+  $('#dashboardPins').innerHTML=items.map(p=>{const m=pinMetrics(p),img=pinImage(p);return '<button class="mini-pin-card dashboard-pin-open" data-pin-id="'+esc(p.id)+'"><div class="image">'+(img?'<img loading="lazy" src="'+esc(img)+'" alt="'+esc(p.alt_text||p.title||'Pinterest Pin')+'">':'')+'</div><div class="copy"><strong>'+esc(p.title||'Untitled Pin')+'</strong><small>'+pinMetricText(m,'IMPRESSION')+' impressions</small></div></button>'}).join('')||'<div class="empty-state">No Pins loaded.</div>';
+  $$('.dashboard-pin-open').forEach(b=>b.onclick=()=>openPinDetail(b.dataset.pinId));
+  if(items[0]){const img=pinImage(items[0]);$('#heroPinImage').style.backgroundImage=img?'url("'+img.replace(/"/g,'%22')+'")':'';$('#heroPinTitle').textContent=items[0].title||'Visual analytics'}
+}
+function closePinModal(){const m=$('#pinModal');m.classList.add('hidden');m.setAttribute('aria-hidden','true')}
+async function openPinDetail(id){
+  const modal=$('#pinModal'),local=state.pins.find(p=>String(p.id)===String(id));state.activePin=local||null;modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');$('#pinModalTitle').textContent=local?.title||'Loading Pin…';$('#pinModalDescription').textContent=local?.description||'';$('#pinModalMetrics').innerHTML='<div class="empty-state">Loading detailed Pin data…</div>';
+  try{
+    const d=await api('/api/pinterest?action=pin-detail&id='+encodeURIComponent(id),{},18000),p=d.pin||local;state.activePin={...p,detail_metrics:d.detail_metrics||null};
+    renderPinDetail(state.activePin)
+  }catch(e){if(local){state.activePin=local;renderPinDetail(local);toast('Detailed metrics could not load: '+e.message)}else{$('#pinModalMetrics').innerHTML='<div class="notice error">'+esc(e.message)+'</div>'}}
+}
+function renderPinDetail(p){
+  const img=pinImage(p),m=p.detail_metrics||pinMetrics(p);$('#pinModalVisual').innerHTML=img?'<img src="'+esc(img)+'" alt="'+esc(p.alt_text||p.title||'Pinterest Pin')+'">':'<span>Image unavailable in Pinterest API response</span>';$('#pinModalTitle').textContent=p.title||'Untitled Pin';$('#pinModalDescription').textContent=p.description||'No description';$('#pinModalBoard').textContent=boardName(p.board_id);$('#pinModalCreated').textContent=p.created_at?new Date(p.created_at).toLocaleDateString():'—';
+  $('#pinModalMetrics').innerHTML=[['Impressions','IMPRESSION'],['Engagements','ENGAGEMENT'],['Saves','SAVE'],['Pin clicks','PIN_CLICK'],['Outbound','OUTBOUND_CLICK']].map(([label,key])=>'<div><small>'+label+'</small><strong>'+pinMetricText(m,key)+'</strong></div>').join('');
+  $('#pinModalPinterest').href='https://www.pinterest.com/pin/'+encodeURIComponent(p.id)+'/';const dest=$('#pinModalDestination');dest.classList.toggle('hidden',!p.link);if(p.link)dest.href=p.link
+}
+$('#pinModalClose').onclick=closePinModal;$('#pinModal').onclick=e=>{if(e.target===$('#pinModal'))closePinModal()};
+$('#pinUseCreate').onclick=async()=>{
+  const p=state.activePin;if(!p)return;$('#title').value=(p.title||'').slice(0,100);$('#description').value=(p.description||'').slice(0,800);$('#destination').value=p.link||'';$('#altText').value=(p.alt_text||'').slice(0,500);state.fileData=null;state.fileBytes=null;state.remoteImage=pinImage(p)||null;state.imageSource='pinterest-selected';
+  if(state.remoteImage){$('#preview').style.backgroundImage='url("'+state.remoteImage.replace(/"/g,'%22')+'")';$('#preview').innerHTML=''}updatePreview();closePinModal();show('create');await loadBoards();if(p.board_id&&state.boards.some(b=>String(b.id)===String(p.board_id)))$('#board').value=String(p.board_id);toast('Pin fields copied into Create Studio for your review')
+};
+$('#reloadPins').onclick=()=>{state.fullLibraryLoaded=false;loadAllPins()};$('#pinSearch').oninput=renderPinLibrary;$('#pinBoardFilter').onchange=renderPinLibrary;$('#pinSort').onchange=renderPinLibrary;
 
-const METRIC_LABELS={IMPRESSION:'Impressions',ENGAGEMENT:'Engagements',SAVE:'Saves',PIN_CLICK:'Pin clicks',OUTBOUND_CLICK:'Outbound clicks',ENGAGEMENT_RATE:'Engagement rate',SAVE_RATE:'Save rate',PIN_CLICK_RATE:'Pin click rate',OUTBOUND_CLICK_RATE:'Outbound click rate',TOTAL_AUDIENCE:'Total audience',ENGAGED_AUDIENCE:'Engaged audience',MONTHLY_TOTAL_AUDIENCE:'Monthly total audience',MONTHLY_ENGAGED_AUDIENCE:'Monthly engaged audience',MONTHLY_VIEWS:'Monthly views'};
+const METRIC_LABELS={IMPRESSION:'Impressions',ENGAGEMENT:'Engagements',SAVE:'Saves',PIN_CLICK:'Pin clicks',OUTBOUND_CLICK:'Outbound clicks',ENGAGEMENT_RATE:'Engagement rate',SAVE_RATE:'Save rate',PIN_CLICK_RATE:'Pin click rate',OUTBOUND_CLICK_RATE:'Outbound click rate'};
 function metricValueFromDay(x,key){return Number(x?.metrics?.[key]??x?.[key]??0)}
 function normalizeSeries(series,key='IMPRESSION'){return(series||[]).map(x=>({date:x.date||x.DATE||'',value:metricValueFromDay(x,key)})).filter(x=>x.date)}
 function formatMetricValue(v,key){const n=Number(v||0);if(String(key).endsWith('_RATE')){const pct=Math.abs(n)<=1?n*100:n;return pct.toFixed(2)+'%'}return compact(n)}
@@ -243,12 +280,46 @@ function makeThumb(){return new Promise(async resolve=>{if(!state.fileData){reso
 $('#schedulePin').onclick=async()=>{const p=currentPayload(),err=validatePin(p),n=$('#publishNotice');if(err){n.className='notice error';n.textContent=err;return}if(!state.user){show('settings');toast('Create an account or sign in to schedule');return}if(!$('#approveSchedule').checked){n.className='notice error';n.textContent='Check the approval box after reviewing this exact Pin.';return}const when=new Date($('#scheduleAt').value);if(Number.isNaN(when.getTime())){n.className='notice error';n.textContent='Choose a future date and time.';return}if(!confirm('Schedule this exact reviewed Pin for '+when.toLocaleString()+'?'))return;n.className='notice';n.textContent='Adding to queue…';try{p.image_thumb=await makeThumb();await post('/api/schedule',{...p,scheduled_at:when.toISOString(),approved:true});n.className='notice success';n.textContent='Scheduled. The server enforces at least 30 minutes between queued Pins.';$('#approveSchedule').checked=false;await loadSchedule();toast('Pin scheduled')}catch(e){n.className='notice error';n.textContent=e.message}};
 
 async function importRemoteImage(url){if(!url)return false;try{const d=await api('/api/blog?action=image&url='+encodeURIComponent(url));state.fileData=d.data;state.fileType=d.content_type;state.fileName='article-pin-image.'+(d.content_type.includes('png')?'png':d.content_type.includes('webp')?'webp':'jpg');state.fileBytes=null;state.remoteImage=url;state.imageSource='article';$('#preview').style.backgroundImage='url("'+url.replace(/"/g,'%22')+'")';$('#preview').innerHTML='';return true}catch{return false}}
-function setArticle(a){state.article=a;$('#selectedArticleTitle').textContent=a.title||'Untitled article';$('#selectedArticleSummary').textContent=a.description||a.excerpt||'No summary found.';$('#selectedArticleUrl').textContent=a.url||'';$('#selectedArticleImage').style.backgroundImage=a.image?'url("'+a.image.replace(/"/g,'%22')+'")':''}
-$('#loadWp').onclick=async()=>{const n=$('#wpNotice'),site=$('#wpSite').value.trim();if(!site){n.className='notice error';n.textContent='Enter a WordPress site URL.';return}n.className='notice';n.textContent='Loading published posts…';try{const d=await api('/api/blog?action=wordpress&site='+encodeURIComponent(site));state.wpPosts=d.posts||[];$('#wpCount').textContent=state.wpPosts.length+' posts';$('#wpPosts').innerHTML=state.wpPosts.map((p,i)=>'<button class="post-card" data-post="'+i+'"><div class="post-image" '+(p.image?'style="background-image:url(&quot;'+esc(p.image)+'&quot;)"':'')+'></div><div class="post-copy"><strong>'+esc(p.title)+'</strong><small>'+esc(p.date?new Date(p.date).toLocaleDateString():'Published post')+'</small></div></button>').join('')||'<div class="empty-state">No published posts returned.</div>';$$('[data-post]').forEach(b=>b.onclick=()=>setArticle({...state.wpPosts[Number(b.dataset.post)],description:state.wpPosts[Number(b.dataset.post)].excerpt}));n.className='notice success';n.textContent='Loaded '+state.wpPosts.length+' published posts from your WordPress REST feed.'}catch(e){n.className='notice error';n.textContent=e.message}};
-$('#importArticle').onclick=async()=>{const n=$('#articleNotice'),url=$('#articleUrl').value.trim();if(!url){n.className='notice error';n.textContent='Paste an article URL.';return}n.className='notice';n.textContent='Importing public article metadata…';try{const d=await api('/api/blog?url='+encodeURIComponent(url));setArticle(d.article);n.className='notice success';n.textContent='Article imported. Review it before generating.'}catch(e){n.className='notice error';n.textContent=e.message}};
-$('#blogGenerate').onclick=async()=>{const n=$('#blogGenerateNotice');if(!state.article){n.className='notice error';n.textContent='Select or import an article first.';return}n.className='notice';n.textContent='Generating options from your selected article…';try{const d=await generatePack({article_title:state.article.title,article_summary:state.article.description||state.article.excerpt,article_url:state.article.url,brand:$('#brand').value,tone:$('#blogTone').value,audience:$('#blogAudience').value});renderVariants($('#blogVariants'),d,v=>{useVariant(v);$('#destination').value=state.article.url||'';state.remoteImage=state.article.image||null;state.fileData=null;state.fileType='image/jpeg';state.imageSource='article';if(state.remoteImage){$('#preview').style.backgroundImage='url("'+state.remoteImage.replace(/"/g,'%22')+'")';$('#preview').innerHTML=''}updatePreview();show('create')});if(d.image_prompt)$('#imagePrompt').value=d.image_prompt;n.className='notice success';n.textContent='Options created. Choose one, then review image, Board and schedule.'}catch(e){n.className='notice error';n.textContent=e.message}};
-$('#useBlogTemplate').onclick=async()=>{if(!state.article){toast('Select an article first');return}$('#title').value=state.article.title.slice(0,100);$('#description').value=(state.article.description||state.article.excerpt||'').slice(0,800);$('#destination').value=state.article.url||'';if(state.article.image)await importRemoteImage(state.article.image);updatePreview();await makeTemplate();show('create')};
-$('#useBlogAiImage').onclick=async()=>{if(!state.article){toast('Select an article first');return}try{const d=state.lastPack||await generatePack({article_title:state.article.title,article_summary:state.article.description||state.article.excerpt,article_url:state.article.url});$('#imagePrompt').value=d.image_prompt||('Vertical editorial image about '+state.article.title);show('create');$$('.visual-tab').forEach(x=>x.classList.toggle('active',x.dataset.visual==='ai'));$$('.visual-panel').forEach(x=>x.classList.add('hidden'));$('#visual-ai').classList.remove('hidden');toast('AI image prompt prepared. Review it before generating.')}catch(e){toast(e.message)}};
+function setArticle(a){state.article=a;openArticleModal(a)}
+function closeArticleModal(){const m=$('#articleModal');m.classList.add('hidden');m.setAttribute('aria-hidden','true')}
+function openArticleModal(a){
+  state.article=a;const m=$('#articleModal');m.classList.remove('hidden');m.setAttribute('aria-hidden','false');$('#articleModalTitle').textContent=a.title||'Untitled article';$('#articleModalSummary').textContent=a.description||a.excerpt||'No summary found.';$('#articleModalSource').href=a.url||'#';$('#articleModalImage').innerHTML=a.image?'<img src="'+esc(a.image)+'" alt="'+esc(a.title||'Article image')+'">':'<span>No article image found — you can upload or generate one in Create Studio.</span>'
+}
+function applyArticleToCreate(a){
+  $('#title').value=(a.title||'').slice(0,100);$('#description').value=(a.description||a.excerpt||'').slice(0,800);$('#destination').value=a.url||'';$('#altText').value=a.title?('Image for '+a.title).slice(0,500):'';state.fileData=null;state.fileBytes=null;state.remoteImage=a.image||null;state.fileType='image/jpeg';state.imageSource='article';
+  if(state.remoteImage){$('#preview').style.backgroundImage='url("'+state.remoteImage.replace(/"/g,'%22')+'")';$('#preview').innerHTML=''}else{$('#preview').style.backgroundImage='';$('#preview').innerHTML='<span>Upload or generate an image</span>'}
+  updatePreview()
+}
+async function openArticleInCreate(mode='manual'){
+  const a=state.article;if(!a){toast('Select an article first');return}applyArticleToCreate(a);
+  if(mode==='ai-copy'){
+    try{const d=await generatePack({article_title:a.title,article_summary:a.description||a.excerpt,article_url:a.url,brand:$('#brand').value});if(d.variants?.[0])useVariant(d.variants[0]);if(d.image_prompt)$('#imagePrompt').value=d.image_prompt}catch(e){toast(e.message)}
+  }
+  if(mode==='ai-image'){
+    try{const d=state.lastPack||await generatePack({article_title:a.title,article_summary:a.description||a.excerpt,article_url:a.url});$('#imagePrompt').value=d.image_prompt||('Vertical editorial image about '+a.title)}catch(e){$('#imagePrompt').value='Vertical editorial image about '+(a.title||'this article')}
+  }
+  closeArticleModal();show('create');
+  if(mode==='ai-image'){$$('.visual-tab').forEach(x=>x.classList.toggle('active',x.dataset.visual==='ai'));$$('.visual-panel').forEach(x=>x.classList.add('hidden'));$('#visual-ai').classList.remove('hidden')}
+}
+$('#articleModalClose').onclick=closeArticleModal;$('#articleModal').onclick=e=>{if(e.target===$('#articleModal'))closeArticleModal()};$('#articleUseManual').onclick=()=>openArticleInCreate('manual');$('#articleUseAI').onclick=()=>openArticleInCreate('ai-copy');$('#articleUseAIImage').onclick=()=>openArticleInCreate('ai-image');
+$('#wpAccessMode').onchange=()=>{$('#wpAuthFields').classList.toggle('hidden',$('#wpAccessMode').value!=='authenticated')};
+function renderWpPosts(){
+  $('#wpCount').textContent=state.wpPosts.length+' posts';$('#wpPosts').innerHTML=state.wpPosts.map((p,i)=>'<button class="post-card" data-post="'+i+'"><div class="post-image">'+(p.image?'<img loading="lazy" src="'+esc(p.image)+'" alt="'+esc(p.title||'Article image')+'">':'<span>No image</span>')+'</div><div class="post-copy"><strong>'+esc(p.title)+'</strong><small>'+esc(p.status||'publish')+' · '+esc(p.date?new Date(p.date).toLocaleDateString():'')+'</small><span>Open composer →</span></div></button>').join('')||'<div class="empty-state">No posts were returned for this connection.</div>';
+  $$('[data-post]').forEach(b=>b.onclick=()=>setArticle({...state.wpPosts[Number(b.dataset.post)],description:state.wpPosts[Number(b.dataset.post)].excerpt}))
+}
+$('#loadWp').onclick=async()=>{
+  const n=$('#wpNotice'),btn=$('#loadWp'),site=$('#wpSite').value.trim(),mode=$('#wpAccessMode').value,authorized=$('#wpAuthorized').checked;
+  if(!site){n.className='notice error';n.textContent='Enter your WordPress site URL.';return}if(!authorized){n.className='notice error';n.textContent='Confirm that you own or are authorized to use this website content.';return}
+  const username=$('#wpUsername').value.trim(),app_password=$('#wpAppPassword').value;if(mode==='authenticated'&&(!username||!app_password)){n.className='notice error';n.textContent='Authenticated mode needs the WordPress username and an Application Password.';return}
+  setBusy(btn,true,'Connecting…');n.className='notice';n.textContent=mode==='authenticated'?'Connecting securely to WordPress…':'Checking the public WordPress REST feed…';$('#wpConnectionStatus').textContent='Connecting…';$('#wpConnectionStatus').className='status-chip warn';
+  try{
+    const d=await post('/api/blog?action=wordpress',{site,mode,username,app_password,limit:24},25000);state.wpPosts=d.posts||[];renderWpPosts();$('#wpConnectionStatus').textContent='Connected · '+state.wpPosts.length+' posts';$('#wpConnectionStatus').className='status-chip good';n.className='notice success';n.textContent=(mode==='authenticated'?'Authenticated WordPress connection succeeded. ':'Public WordPress feed connected. ')+state.wpPosts.length+' posts loaded.';
+    $('#wpAppPassword').value='';
+    if($('#wpRemember').checked&&state.user){try{await post('/api/websites',{site_url:d.site||site,site_name:new URL(d.site||site).hostname,kind:'wordpress',confirmed:true});await loadWebsites()}catch{}}
+  }catch(e){$('#wpConnectionStatus').textContent='Connection failed';$('#wpConnectionStatus').className='status-chip warn';n.className='notice error';n.textContent=e.message}
+  finally{setBusy(btn,false)}
+};
+$('#importArticle').onclick=async()=>{const n=$('#articleNotice'),btn=$('#importArticle'),url=$('#articleUrl').value.trim();if(!url){n.className='notice error';n.textContent='Paste an article URL.';return}setBusy(btn,true,'Importing…');n.className='notice';n.textContent='Reading public article metadata…';try{const d=await api('/api/blog?url='+encodeURIComponent(url),{},18000);state.wpPosts=[d.article,...state.wpPosts.filter(x=>x.url!==d.article.url)];renderWpPosts();openArticleModal(d.article);n.className='notice success';n.textContent='Article imported. Choose how you want to create the Pin.'}catch(e){n.className='notice error';n.textContent=e.message}finally{setBusy(btn,false)}};
 
 async function loadSchedule(){if(!$('#timezoneLabel'))return;$('#timezoneLabel').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone||'Local';try{const d=await api('/api/schedule');state.schedule=d.items||[];const active=state.schedule.filter(x=>x.status==='scheduled');$('#queueCount').textContent=$('#dashQueue').textContent=String(active.length);updateOnboarding();$('#queueLimit').textContent=active.length+' / '+d.limit;$('#schedulerNotice').className='notice success';$('#schedulerNotice').textContent='Persistent queue ready. Every scheduled item was explicitly approved. Background execution still needs a recurring worker trigger when the browser is closed.';renderSchedule();renderDashboardQueue(active);return true}catch(e){state.schedule=[];$('#queueCount').textContent=$('#dashQueue').textContent='0';$('#queueLimit').textContent='—';$('#schedulerNotice').className='notice';$('#schedulerNotice').textContent=e.status===401?'Create an account or sign in to use the persistent scheduler.':e.message;$('#scheduleList').innerHTML='<div class="empty-state">'+esc($('#schedulerNotice').textContent)+'</div>';renderDashboardQueue([]);return false}}
 function queueImage(x){return x.image_thumb?'data:image/jpeg;base64,'+x.image_thumb:x.image_url||''}
@@ -263,22 +334,15 @@ async function syncCheckout(){const q=new URLSearchParams(location.search),sessi
 
 async function loadWebsites(){
   const box=$('#websiteList');if(!box)return;
-  if(!state.user){box.innerHTML='<div class="empty-state">Sign in to save a website connection.</div>';$('#websiteStatus').textContent='Sign in required';$('#websiteStatus').className='status-chip warn';return}
+  if(!state.user){box.innerHTML='<div class="empty-state">Sign in if you want the Studio to remember website URLs.</div>';return}
   try{
-    const d=await api('/api/websites');const sites=d.sites||[];state.sites=sites;
-    $('#websiteStatus').textContent=sites.length?(sites.length+' saved'):'Optional';$('#websiteStatus').className='status-chip '+(sites.length?'good':'');
-    updateOnboarding();if($('#websiteIntegration')){$('#websiteIntegration').textContent=sites.length?(sites.length+' site'+(sites.length===1?'':'s')+' saved'):'Not connected';$('#websiteIntegration').className='status-chip '+(sites.length?'good':'')}box.innerHTML=sites.map(s=>'<div class="queue-item"><div class="queue-thumb" style="display:grid;place-items:center;background:#f2efff;color:#6847dc;font-weight:900">WP</div><div><strong>'+esc(s.site_name||s.site_url)+'</strong><small>'+esc(s.site_url)+'</small></div><div class="button-row"><button class="text-btn use-site" data-url="'+esc(s.site_url)+'">Use</button><button class="text-btn remove-site" data-id="'+esc(s.id)+'">Remove</button></div></div>').join('')||'<div class="empty-state">No website saved yet.</div>';
-    $$('.use-site').forEach(b=>b.onclick=()=>{$('#wpSite').value=b.dataset.url;toast('Website selected — click Load posts')});
-    $$('.remove-site').forEach(b=>b.onclick=async()=>{if(!confirm('Remove this saved website connection?'))return;try{await api('/api/websites?id='+encodeURIComponent(b.dataset.id),{method:'DELETE'});await loadWebsites()}catch(e){toast(e.message)}});
+    const d=await api('/api/websites');const sites=d.sites||[];state.sites=sites;updateOnboarding();
+    if($('#websiteIntegration')){$('#websiteIntegration').textContent=sites.length?(sites.length+' site'+(sites.length===1?'':'s')+' saved'):'Not connected';$('#websiteIntegration').className='status-chip '+(sites.length?'good':'')}
+    box.innerHTML=sites.map(s=>'<div class="saved-site-row"><div><strong>'+esc(s.site_name||s.site_url)+'</strong><small>'+esc(s.site_url)+'</small></div><div class="button-row"><button class="text-btn use-site" data-url="'+esc(s.site_url)+'">Use</button><button class="text-btn remove-site" data-id="'+esc(s.id)+'">Remove</button></div></div>').join('')||'<div class="empty-state">No saved website URL yet.</div>';
+    $$('.use-site').forEach(b=>b.onclick=()=>{$('#wpSite').value=b.dataset.url;$('#wpSite').focus();toast('Website selected')});
+    $$('.remove-site').forEach(b=>b.onclick=async()=>{if(!confirm('Remove this saved website URL?'))return;try{await api('/api/websites?id='+encodeURIComponent(b.dataset.id),{method:'DELETE'});await loadWebsites()}catch(e){toast(e.message)}})
   }catch(e){box.innerHTML='<div class="empty-state">'+esc(e.message)+'</div>'}
 }
-$('#connectWebsite').onclick=async()=>{
-  if(!state.user){show('settings');toast('Sign in before saving a website');return}
-  const url=$('#websiteConnectUrl').value.trim(),confirmed=$('#websiteConfirmed').checked;
-  if(!url){toast('Enter your public WordPress site URL');return}
-  if(!confirmed){toast('Confirm you own or are authorized to use this site');return}
-  try{const d=await post('/api/websites',{site_url:url,site_name:new URL(url.startsWith('http')?url:'https://'+url).hostname,kind:'wordpress-public',confirmed:true});$('#wpSite').value=d.site_url||url;$('#websiteConnectUrl').value='';$('#websiteConfirmed').checked=false;await loadWebsites();toast('Website saved. You can now load its published posts.')}catch(e){toast(e.message)}
-};
 
 async function loadAdmin(){
   if(state.user?.role!=='owner')return;
