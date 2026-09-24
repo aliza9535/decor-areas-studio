@@ -45,7 +45,7 @@ export async function getSessionUser(req){
   const token=parseCookies(req).da_session;
   if(!token) return null;
   const hash=crypto.createHash('sha256').update(token).digest('hex'),sql=getDb();
-  const rows=await sql`select u.id,u.email,u.plan,u.stripe_customer_id,u.stripe_subscription_id
+  const rows=await sql`select u.id,u.email,u.plan,u.role,u.ai_credits,u.email_verified_at,u.stripe_customer_id,u.stripe_subscription_id
     from app_sessions s join app_users u on u.id=s.user_id
     where s.token_hash=${hash} and s.expires_at>now() limit 1`;
   return rows[0]||null;
