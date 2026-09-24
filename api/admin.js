@@ -1,7 +1,7 @@
 import crypto from 'crypto';
-import {getDb,ensureSchema,dbConfigured} from './lib/db.js';
-import {getSessionUser,trustedPost} from './lib/auth.js';
-import {getSetting,hasSetting,setSetting,deleteSetting,getOpenAIConfig,getEmailConfig,listFrom} from './lib/settings.js';
+import {getDb,ensureSchema,dbConfigured} from '../server/db.js';
+import {getSessionUser,trustedPost} from '../server/auth.js';
+import {getSetting,hasSetting,setSetting,deleteSetting,getOpenAIConfig,getEmailConfig,listFrom} from '../server/settings.js';
 
 async function owner(req,res){
   if(!dbConfigured()){res.status(503).json({error:'Database is not connected.'});return null}
