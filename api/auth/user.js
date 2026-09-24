@@ -72,6 +72,21 @@ export default async function handler(req,res){
     return res.status(200).json({ok:true,sent:true});
   }
 
+  if(action==='change-password'){
+    const user=await getSessionUser(req);if(!user)return res.status(401).json({error:'Sign in first.'});
+    const current=String(req.body?.current_password||''),next=String(req.body?.new_password||'');
+    if(next.length<8)return res.status(400).json({error:'Use at least 8 characters for the new password.'});
+    const cookies=Object.fromEntries((req.headers.cookie||'').split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.indexOf('=');return i<0?[x,'']:[decodeURIComponent(x.slice(0,i)),decodeURIComponent(x.slice(i+1))]}));
+    const recovered=cookies.da_owner_recovered==='1'&&user.role==='owner';
+    if(!recovered){
+      const rows=await sql`select password_hash from app_users where id=${user.id} limit 1`;
+      if(!rows.length||!verifyPassword(current,rows[0].password_hash))return res.status(401).json({error:'Current password is incorrect.'});
+    }
+    await sql`update app_users set password_hash=${hashPassword(next)} where id=${user.id}`;
+    res.setHeader('Set-Cookie','da_owner_recovered=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax');
+    return res.status(200).json({ok:true});
+  }
+
   if(action==='logout'){await destroySession(req);res.setHeader('Set-Cookie',sessionCookie('',0));return res.status(200).json({ok:true})}
 
   if(action==='delete'){
