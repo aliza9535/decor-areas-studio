@@ -10,7 +10,8 @@ export function parseCookies(req){
 export function trustedPost(req){
   const host=req.headers['x-forwarded-host']||req.headers.host;
   const proto=req.headers['x-forwarded-proto']||'https';
-  const expected=(process.env.APP_ORIGIN||`${proto}://${host}`).replace(/\/$/,'');
+  const requestOrigin=(`${proto}://${host}`).replace(/\/$/,'');
+  const expected=(process.env.VERCEL_ENV==='preview'?requestOrigin:(process.env.APP_ORIGIN||requestOrigin)).replace(/\/$/,'');
   const actual=String(req.headers.origin||'').replace(/\/$/,'');
   return !actual||actual===expected;
 }
