@@ -4,95 +4,54 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Decor Areas Studio</title>
-  <meta name="description" content="Content planning, publishing and analytics for creators and businesses.">
+  <meta name="description" content="Pinterest publishing, content planning and organic analytics for creators and businesses.">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<div class="shell">
+<div class="app-shell">
   <aside class="sidebar">
-    <div class="brand"><div class="mark">DA</div><div><strong>Decor Areas Studio</strong><small>Content & analytics</small></div></div>
-    <nav>
-      <button class="nav active" data-page="home">Overview</button>
-      <button class="nav" data-page="analytics">Analytics</button>
-      <button class="nav" data-page="create">Create</button>
-      <button class="nav" data-page="demo">API Status</button>
-      <button class="nav" data-page="settings">Settings</button>
+    <div class="brand-row">
+      <div class="brand-mark">DA</div>
+      <div><strong>Decor Areas Studio</strong><small>Publishing & analytics</small></div>
+    </div>
+    <nav class="nav-list" aria-label="Main navigation">
+      <button class="nav active" data-page="dashboard"><span>⌂</span>Dashboard</button>
+      <button class="nav" data-page="create"><span>✦</span>Create</button>
+      <button class="nav" data-page="planner"><span>◷</span>Planner</button>
+      <button class="nav" data-page="library"><span>▦</span>Pin Library</button>
+      <button class="nav" data-page="analytics"><span>↗</span>Analytics</button>
+      <button class="nav" data-page="boards"><span>▤</span>Boards</button>
+      <button class="nav" data-page="settings"><span>⚙</span>Settings</button>
     </nav>
-    <div class="connection"><span id="connectionDot"></span><div><strong>Pinterest API</strong><small id="connectionText">Not connected</small></div></div>
+    <div class="sidebar-foot">
+      <div class="connection-line"><span id="connectionDot"></span><div><strong>Pinterest API</strong><small id="connectionText">Checking…</small></div></div>
+      <div class="standard-chip">Standard access</div>
+    </div>
   </aside>
-
   <main>
-    <header><strong>Decor Areas Studio</strong><div class="header-right"><span class="api-badge">Pinterest API v5</span><span id="accountLabel">Access setup</span></div></header>
-
-    <section class="page active" id="page-home">
-      <div class="eyebrow">CONTENT MARKETING WORKSPACE</div>
-      <h1>Create, publish and measure your content</h1>
-      <p class="lead">Decor Areas Studio is an independent tool for creators and businesses. Users connect their own Pinterest account through Pinterest OAuth and explicitly choose the content they publish.</p>
-      <div class="cards">
-        <article><span>1</span><div><strong>Connect</strong><p>Authorize access on Pinterest. We never request your Pinterest password or session cookies.</p></div></article>
-        <article><span>2</span><div><strong>Measure</strong><p>View organic analytics for the Pinterest account that you authorized.</p></div></article>
-        <article><span>3</span><div><strong>Create</strong><p>Prepare an image, title, description, destination and Board selection.</p></div></article>
-        <article><span>4</span><div><strong>Publish</strong><p>Review and explicitly confirm each publishing action.</p></div></article>
-      </div>
-      <div class="panel policy"><strong>Independent branding</strong><p>Decor Areas Studio uses Pinterest only as a descriptive reference to the platform and API being connected. It is not an official Pinterest product and does not claim Pinterest Business Partner status.</p></div>
+    <header class="topbar">
+      <button id="mobileMenu" class="icon-btn mobile-only" aria-label="Open menu">☰</button>
+      <div><strong id="pageTitle">Dashboard</strong><small id="pageSubtitle">Content workspace</small></div>
+      <div class="topbar-right"><span class="api-badge">Pinterest API v5</span><span id="accountLabel">Not connected</span></div>
+    </header>
+    <section class="page active" id="page-dashboard">
+      <div class="hero"><div><div class="eyebrow">STANDARD ACCESS ACTIVE</div><h1>Plan. Create. Publish. Measure.</h1><p>One workspace for user-approved Pinterest publishing and organic analytics. Pinterest data is fetched only for the account that authorizes the app.</p><div class="hero-actions"><button class="primary" data-go="create">Create a Pin</button><button class="secondary" data-go="analytics">View analytics</button></div></div><div class="hero-orb"><span>DA</span><small>Studio</small></div></div>
+      <div class="metrics dashboard-metrics"><article><small>Impressions · 30d</small><strong id="dashImpressions">—</strong><span>Authorized account</span></article><article><small>Saves · 30d</small><strong id="dashSaves">—</strong><span>Organic</span></article><article><small>Pin clicks · 30d</small><strong id="dashClicks">—</strong><span>Organic</span></article><article><small>Outbound clicks · 30d</small><strong id="dashOutbound">—</strong><span>Organic</span></article></div>
+      <div class="dashboard-grid"><article class="panel quick-panel"><div class="section-head"><div><span class="kicker">WORKFLOW</span><h2>Quick start</h2></div></div><button data-go="create" class="quick-row"><span class="quick-icon">01</span><div><strong>Build a polished Pin</strong><small>Upload an image, add copy, optionally design a 2:3 creative, then review and publish.</small></div><b>→</b></button><button data-go="planner" class="quick-row"><span class="quick-icon">02</span><div><strong>Prepare your content queue</strong><small>Save user-selected drafts and planned publish times locally in this browser.</small></div><b>→</b></button><button data-go="library" class="quick-row"><span class="quick-icon">03</span><div><strong>Review your Pin library</strong><small>Fetch your authorized Pins directly from Pinterest on demand.</small></div><b>→</b></button></article><article class="panel guardrail-panel"><span class="shield">✓</span><div class="kicker">POLICY-FIRST AUTOMATION</div><h2>Designed around explicit user choice</h2><p>Every Pinterest write action requires a specific user-selected item and confirmation. No scraping, competitor research, hidden engagement automation or Pinterest-data model training.</p><a href="/security/">Security & data handling →</a></article></div>
     </section>
-
-    <section class="page" id="page-analytics">
-      <div class="pagehead"><div><div class="eyebrow">AUTHORIZED ACCOUNT</div><h1>Analytics</h1><p class="lead">Organic performance for the Pinterest account that explicitly authorized Decor Areas Studio.</p></div><button class="secondary" id="refreshAnalytics">Refresh</button></div>
-      <div class="notice" id="analyticsNotice">Connect an authorized Pinterest account to load analytics.</div>
-      <div class="metrics">
-        <article><small>Impressions</small><strong id="metricImpressions">—</strong></article>
-        <article><small>Saves</small><strong id="metricSaves">—</strong></article>
-        <article><small>Pin clicks</small><strong id="metricClicks">—</strong></article>
-        <article><small>Outbound clicks</small><strong id="metricOutbound">—</strong></article>
-      </div>
-      <div class="panel"><div class="panel-title"><strong>Top Pins for this authorized account</strong><small>Organic analytics</small></div><div class="table-wrap"><table><thead><tr><th>Pin ID</th><th>Impressions</th><th>Saves</th><th>Pin clicks</th><th>Outbound clicks</th></tr></thead><tbody id="topPins"><tr><td colspan="5">Connect an authorized account to load analytics.</td></tr></tbody></table></div></div>
-    </section>
-
     <section class="page" id="page-create">
-      <div class="eyebrow">STANDARD ACCESS · USER-APPROVED PUBLISHING</div><h1>Create</h1><p class="lead">Create a Pin for the Pinterest account you explicitly connected. Every production publish requires your confirmation.</p>
-      <div class="production-card"><div><span class="production-label">PRODUCTION</span><strong>Standard publishing</strong><p>Uses Pinterest OAuth and publishes only the individual Pin you review and confirm.</p></div><a class="primary link-button" id="productionConnect" href="/api/pinterest?action=oauth&env=production">Connect Pinterest</a></div>
-      <div class="notice" id="createNotice">Connect Pinterest to load your Boards and publish.</div>
-      <div class="create-grid">
-        <div class="panel form">
-          <label>Board<select id="board"><option value="">Connect Pinterest first…</option></select></label>
-          <label>Title<input id="title" maxlength="100" placeholder="Example: Small bedroom storage ideas"></label>
-          <label>Description<textarea id="description" rows="5" placeholder="Describe the content"></textarea></label>
-          <label>Destination URL<input id="destination" type="url" placeholder="https://your-site.com/article"></label>
-          <label>Image<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
-          <label>Alt text<input id="altText" maxlength="500" placeholder="Describe the image for accessibility"></label>
-          <button class="primary" id="publish" disabled>Publish this Pin to Pinterest</button>
-          <div class="notice" id="publishNotice">Nothing will be published without your explicit confirmation.</div>
-        </div>
-        <div class="panel"><strong>Preview</strong><div class="preview" id="preview">Image preview</div><h3 id="previewTitle">Your title</h3><p id="previewDescription">Your description will appear here.</p></div>
-      </div>
-      <div class="panel sandbox-tools"><strong>Sandbox testing</strong><p>Sandbox remains available for safe API testing without affecting production content.</p><a class="secondary link-button" href="/api/pinterest?action=oauth&env=sandbox">Connect Sandbox</a></div>
+      <div class="page-heading"><div><div class="eyebrow">CREATIVE STUDIO</div><h1>Create a Pin</h1><p>Build one Pin at a time, review it, then explicitly confirm publishing.</p></div><button class="secondary" id="saveDraft">Save draft</button></div>
+      <div class="mode-tabs" role="tablist"><button class="mode-tab active" data-mode="single">Single Pin</button><button class="mode-tab" data-mode="blog">Blog → Pin</button><button class="mode-tab" data-mode="design">Pin Designer</button></div>
+      <div class="mode-panel" id="mode-single"><div class="notice" id="createNotice">Connect Pinterest to load your Boards and publish.</div></div>
+      <div class="mode-panel hidden" id="mode-blog"><div class="panel blog-card"><div class="section-head"><div><span class="kicker">YOUR CONTENT ONLY</span><h2>Turn an article into Pin copy</h2></div><span class="safe-pill">No Pinterest scraping</span></div><p class="muted">Paste content you own or are authorized to use. Decor Areas Studio creates editable copy variations locally from the text you provide; it does not scrape Pinterest.</p><div class="form-grid two"><label>Article URL<input id="blogUrl" type="url" placeholder="https://your-site.com/article"></label><label>Article title<input id="blogTitle" maxlength="140" placeholder="Example: 17 Small Kitchen Storage Ideas"></label></div><label>Article summary<textarea id="blogSummary" rows="4" placeholder="Paste a short summary or excerpt you are authorized to use"></textarea></label><button class="secondary" id="generateVariations">Create editable variations</button><div id="variationGrid" class="variation-grid"></div></div></div>
+      <div class="mode-panel hidden" id="mode-design"><div class="panel designer-card"><div class="section-head"><div><span class="kicker">2:3 CREATIVE BUILDER</span><h2>Design a Pin image</h2></div><span class="safe-pill">Runs in your browser</span></div><div class="designer-grid"><div class="designer-controls"><label>Background image<input id="designerImage" type="file" accept="image/jpeg,image/png,image/webp"></label><label>Headline<input id="designerHeadline" maxlength="100" placeholder="Your Pin headline"></label><label>Brand line<input id="designerBrand" maxlength="60" placeholder="yourdomain.com"></label><label>Style<select id="designerStyle"><option value="editorial">Editorial</option><option value="clean">Clean</option><option value="bold">Bold</option></select></label><button class="secondary" id="renderDesign">Render design</button><button class="primary" id="useDesign">Use this design for publishing</button><p class="tiny">The generated image stays in your browser until you choose to publish it.</p></div><canvas id="designerCanvas" width="1000" height="1500" aria-label="Pin design preview"></canvas></div></div></div>
+      <div class="create-grid"><div class="panel form publish-form"><div class="section-head"><div><span class="kicker">PUBLISH DETAILS</span><h2>Review before publishing</h2></div><span class="required-note">* required</span></div><label>Board *<select id="board"><option value="">Connect Pinterest first…</option></select></label><label>Title *<input id="title" maxlength="100" placeholder="Example: Small bedroom storage ideas"></label><label>Description<textarea id="description" rows="5" maxlength="800" placeholder="Describe the content"></textarea></label><label>Destination URL<input id="destination" type="url" placeholder="https://your-site.com/article"></label><label>Image *<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp"></label><label>Alt text<input id="altText" maxlength="500" placeholder="Describe the image for accessibility"></label><button class="primary publish-btn" id="publish" disabled>Review & publish this Pin</button><div class="notice" id="publishNotice">Nothing is published without your explicit confirmation.</div></div><div class="panel preview-panel"><div class="section-head"><div><span class="kicker">PREVIEW</span><h2>Pin preview</h2></div><span class="ratio-pill">2:3</span></div><div class="preview" id="preview"><span>Upload or design an image</span></div><h3 id="previewTitle">Your title</h3><p id="previewDescription">Your description will appear here.</p><small id="previewLink">Destination link</small></div></div>
     </section>
-
-    <section class="page" id="page-demo">
-      <div class="eyebrow">PINTEREST API ACCESS</div><h1>API Status</h1><p class="lead">Production OAuth, authorized analytics and user-approved publishing under Standard access.</p>
-      <div class="notice success"><strong>Use case:</strong> content marketing, creative and measurement for creators and businesses who explicitly connect their own Pinterest accounts.</div>
-      <div class="compliance"><span>Official OAuth</span><span>Authorized account data</span><span>User approves each Pin</span><span>No Pinterest passwords</span><span>No Pinterest session cookies</span><span>No scraping</span><span>API data fetched on demand</span><span>No cross-account aggregation</span><span>No AI training with Pinterest data</span><span>Independent branding</span></div>
-      <div class="checks">
-        <article><span class="check good"></span><div><strong>HTTPS</strong><small>Current live app</small></div></article>
-        <article><span class="check good"></span><div><strong>Privacy policy</strong><small>/privacy/</small></div></article>
-        <article><span class="check" id="checkOAuth"></span><div><strong>OAuth</strong><small id="checkOAuthText">Awaiting connection</small></div></article>
-        <article><span class="check" id="checkAnalytics"></span><div><strong>Analytics</strong><small id="checkAnalyticsText">Awaiting connection</small></div></article>
-        <article><span class="check" id="checkSandbox"></span><div><strong>Sandbox</strong><small id="checkSandboxText">Awaiting connection</small></div></article>
-      </div>
-      <div class="panel policy"><strong>Review safeguards</strong><p>Decor Areas Studio requests only the permissions needed for the features shown here. Pinterest API data is fetched on demand for the authorized account and is not used for competitor research, benchmarking, cross-account aggregation, off-Pinterest advertising, or AI model training.</p><p>Standard access is active. Production publishing requires explicit user confirmation for each individual Pin. Pinterest Sandbox remains available for isolated testing.</p><p><a href="/privacy/">Privacy</a> · <a href="/security/">Security</a> · <a href="/data-deletion/">Data deletion & disconnection</a></p></div><div class="panel demo-panel"><h3>Connection</h3><p>Connect or reconnect the Pinterest account through Pinterest OAuth. Decor Areas Studio accesses only data authorized by that account.</p><a class="primary link-button wide" href="/api/pinterest?action=oauth&env=production">Connect Pinterest</a></div>
-    </section>
-
-    <section class="page" id="page-settings">
-      <div class="eyebrow">ACCOUNT</div><h1>Settings</h1>
-      <div class="cards">
-        <article><div><strong>OAuth Authorization Code</strong><p>Implemented for end-user authorization.</p></div></article>
-        <article><div><strong>User-approved publishing</strong><p>Explicit confirmation is required before creating a Pin.</p></div></article>
-        <article><div><strong>Scraping</strong><p>Not used.</p></div></article>
-        <article><div><strong>Pinterest passwords</strong><p>Never collected.</p></div></article>
-      </div>
-      <div class="panel"><strong>Connection control</strong><p>Clear the Pinterest OAuth credentials stored by this browser. You can also revoke app authorization from Pinterest account settings.</p><button class="secondary" id="disconnectPinterest">Disconnect Pinterest from this browser</button></div><div class="panel legal-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/data-deletion/">Data deletion</a><a href="/security/">Security</a></div>
-    </section>
+    <section class="page" id="page-planner"><div class="page-heading"><div><div class="eyebrow">CONTENT PLANNER</div><h1>Drafts & queue</h1><p>Prepare individual Pins and planned times. Draft data is stored only in this browser.</p></div><button class="secondary" id="clearPlanner">Clear local drafts</button></div><div class="notice warning"><strong>Automatic background scheduling is intentionally not enabled yet.</strong> A reliable scheduler needs a durable server database and background worker. Until that infrastructure is connected, the planner never performs a Pinterest action while you are away.</div><div class="planner-grid"><div class="panel"><div class="section-head"><div><span class="kicker">NEW PLAN</span><h2>Plan a Pin</h2></div></div><div class="form-grid two"><label>Planned date & time<input id="planWhen" type="datetime-local"></label><label>Label<input id="planLabel" maxlength="80" placeholder="Kitchen article Pin 1"></label></div><p class="tiny">Use “Save current Pin to planner” to store the title, description, URL and selected Board from Create. Images are not persisted locally.</p><button class="primary" id="saveToPlanner">Save current Pin to planner</button></div><div class="panel"><div class="section-head"><div><span class="kicker">QUEUE</span><h2>Planned Pins</h2></div><span id="plannerCount" class="count-pill">0</span></div><div id="plannerList" class="planner-list"><div class="empty-state">No planned Pins yet.</div></div></div></div></section>
+    <section class="page" id="page-library"><div class="page-heading"><div><div class="eyebrow">AUTHORIZED ACCOUNT</div><h1>Pin Library</h1><p>Fetched directly from Pinterest for the account that connected Decor Areas Studio.</p></div><button class="secondary" id="refreshPins">Refresh</button></div><div class="notice" id="libraryNotice">Connect Pinterest to load your Pins.</div><div id="pinGrid" class="pin-grid"><div class="empty-state">No Pins loaded yet.</div></div></section>
+    <section class="page" id="page-analytics"><div class="page-heading"><div><div class="eyebrow">ORGANIC REPORTING</div><h1>Analytics</h1><p>30-day organic performance for the Pinterest account that explicitly authorized this app.</p></div><button class="secondary" id="refreshAnalytics">Refresh</button></div><div class="notice" id="analyticsNotice">Connect Pinterest to load analytics.</div><div class="metrics"><article><small>Impressions</small><strong id="metricImpressions">—</strong><span>30 days</span></article><article><small>Saves</small><strong id="metricSaves">—</strong><span>30 days</span></article><article><small>Pin clicks</small><strong id="metricClicks">—</strong><span>30 days</span></article><article><small>Outbound clicks</small><strong id="metricOutbound">—</strong><span>30 days</span></article></div><div class="panel"><div class="section-head"><div><span class="kicker">TOP CONTENT</span><h2>Top Pins</h2></div><small class="muted">Authorized account only</small></div><div class="table-wrap"><table><thead><tr><th>Pin ID</th><th>Impressions</th><th>Saves</th><th>Pin clicks</th><th>Outbound</th></tr></thead><tbody id="topPins"><tr><td colspan="5">No analytics loaded.</td></tr></tbody></table></div></div></section>
+    <section class="page" id="page-boards"><div class="page-heading"><div><div class="eyebrow">ORGANIZE CONTENT</div><h1>Boards</h1><p>View and create Boards for the connected Pinterest account.</p></div><button class="secondary" id="refreshBoards">Refresh</button></div><div class="board-layout"><div class="panel"><div class="section-head"><div><span class="kicker">CREATE</span><h2>New Board</h2></div></div><label>Board name<input id="newBoardName" maxlength="100" placeholder="Example: Small Space Ideas"></label><label>Description<textarea id="newBoardDescription" rows="4" maxlength="500" placeholder="Optional Board description"></textarea></label><button class="primary" id="createBoard">Review & create Board</button><div class="notice" id="boardNotice">Board creation requires your explicit confirmation.</div></div><div class="panel"><div class="section-head"><div><span class="kicker">YOUR BOARDS</span><h2>Connected Boards</h2></div><span id="boardCount" class="count-pill">0</span></div><div id="boardList" class="board-list"><div class="empty-state">Connect Pinterest to load Boards.</div></div></div></div></section>
+    <section class="page" id="page-settings"><div class="page-heading"><div><div class="eyebrow">ACCOUNT & SAFETY</div><h1>Settings</h1><p>Connection controls, API safeguards and local workspace management.</p></div></div><div class="settings-grid"><div class="panel connect-panel"><span class="kicker">PINTEREST CONNECTION</span><h2>OAuth Authorization Code</h2><p>Pinterest passwords and Pinterest session cookies are never requested by Decor Areas Studio.</p><a class="primary link-button" id="productionConnect" href="/api/pinterest?action=oauth&env=production">Connect / reconnect Pinterest</a><button class="secondary" id="disconnectPinterest">Disconnect Pinterest from this browser</button></div><div class="panel"><span class="kicker">LOCAL WORKSPACE</span><h2>Browser-only drafts</h2><p>Planner drafts and copy variations are stored only in this browser. Pinterest API-derived account data is not stored in the planner.</p><button class="secondary" id="clearWorkspace">Clear local workspace</button></div></div><div class="policy-grid"><article><strong>Explicit publishing</strong><p>Every Pin and Board write action requires user review and confirmation.</p></article><article><strong>No scraping</strong><p>The app does not scrape Pinterest or offer competitor research or benchmarking.</p></article><article><strong>No API-data AI training</strong><p>Pinterest API-derived data is not used to train, fine-tune or improve AI models.</p></article><article><strong>On-demand data</strong><p>Authorized Pinterest account data is fetched when the user requests it.</p></article></div><div class="panel legal-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/data-deletion/">Data deletion</a><a href="/security/">Security</a></div><div class="sandbox-strip"><div><strong>Sandbox testing</strong><small>Keep a separate safe environment for API testing.</small></div><a class="secondary link-button" href="/api/pinterest?action=oauth&env=sandbox">Connect Sandbox</a></div></section>
   </main>
 </div>
 <script src="/app.js"></script>
