@@ -1,194 +1,53 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Decor Areas Studio</title>
-  <meta name="description" content="Pinterest publishing, scheduling, AI-assisted creative workflows and organic analytics for creators and businesses.">
-  <link rel="stylesheet" href="/styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Decor Areas Studio — Pinterest publishing, scheduling & analytics</title>
+<meta name="description" content="Plan, create, schedule and measure Pinterest content from one visual workspace.">
+<link rel="stylesheet" href="/landing.css">
 </head>
 <body>
-<div class="app-shell">
-  <aside class="sidebar">
-    <div class="brand"><div class="brand-mark">DA</div><div><strong>Decor Areas Studio</strong><small>Creator operations</small></div></div>
-    <div class="nav-label">Create</div>
-    <nav>
-      <button class="nav active" data-page="dashboard"><span>⌂</span>Dashboard</button>
-      <button class="nav" data-page="create"><span>✦</span>Create Pin</button>
-      <button class="nav" data-page="blog"><span>↗</span>Blog → Pin</button>
-      <button class="nav" data-page="scheduler"><span>◷</span>Scheduler</button>
-    </nav>
-    <div class="nav-label">Measure</div>
-    <nav>
-      <button class="nav" data-page="library"><span>▦</span>Pin Library</button>
-      <button class="nav" data-page="analytics"><span>⌁</span>Analytics</button>
-      <button class="nav" data-page="boards"><span>▤</span>Boards</button>
-    </nav>
-    <div class="nav-label">Business</div>
-    <nav>
-      <button class="nav" data-page="integrations"><span>⌘</span>Integrations</button>
-      <button class="nav" data-page="plans"><span>◇</span>Plans</button>
-      <button class="nav" data-page="settings"><span>⚙</span>Settings</button>
-    </nav>
-    <div class="side-status">
-      <div class="connection-line"><span id="connectionDot"></span><div><strong>Pinterest API</strong><small id="connectionText">Checking…</small></div></div>
-      <div class="standard-chip">Standard access</div>
-    </div>
-  </aside>
+<header class="site-header">
+  <a class="brand" href="/"><span class="brand-mark">DA</span><span><strong>Decor Areas Studio</strong><small>Creator operations</small></span></a>
+  <nav><a href="#workflow">Workflow</a><a href="#features">Features</a><a href="#pricing">Plans</a><a href="#security">Security</a></nav>
+  <div class="actions"><a class="ghost" href="/app/?login=1">Sign in</a><a class="primary" href="/app/?signup=1">Start free</a></div>
+</header>
+<main>
+<section class="hero">
+  <div class="hero-copy"><span class="eyebrow">PINTEREST API · STANDARD ACCESS</span><h1>From blog post to scheduled Pin — in one workspace.</h1><p>Decor Areas Studio combines visual publishing, WordPress import, scheduling and authorized organic analytics for creators and businesses.</p><div class="hero-actions"><a class="primary big" href="/app/?signup=1">Start free — no card</a><a class="secondary big" href="/app/">Open the Studio</a></div><div class="trust"><span>Official Pinterest OAuth</span><span>Explicit per-Pin approval</span><span>No Pinterest scraping</span></div></div>
+  <div class="product">
+    <div class="mock-side"><b>DA</b><i></i><i class="on"></i><i></i><i></i><i></i></div>
+    <div class="mock-main"><div class="mock-top"><span>Dashboard</span><em>Standard access</em></div><div class="mock-hero"><div><small>CREATOR OPERATIONS</small><strong>Plan. Create. Publish. Measure.</strong></div><div class="mock-card"><span>Next scheduled</span><b>4:30 PM</b></div></div><div class="mock-metrics"><div><small>Impressions</small><b>128K</b></div><div><small>Saves</small><b>4.8K</b></div><div><small>Outbound</small><b>3.2K</b></div><div><small>Queue</small><b>12</b></div></div><div class="mock-bottom"><div class="chart"><svg viewBox="0 0 500 150" preserveAspectRatio="none"><polyline points="0,112 65,93 125,102 190,58 255,72 315,34 380,53 435,25 500,17" fill="none" stroke="currentColor" stroke-width="4"/></svg></div><div class="pins"><i></i><i></i><i></i></div></div></div>
+  </div>
+</section>
 
-  <main class="main">
-    <header class="topbar">
-      <button id="mobileMenu" class="icon-btn mobile-only">☰</button>
-      <div><strong id="pageTitle">Dashboard</strong><small id="pageSubtitle">Content operations at a glance</small></div>
-      <div class="top-actions"><span class="api-badge">Pinterest API v5</span><button class="ghost" id="accountAction">Sign in</button></div>
-    </header>
+<section class="audience"><span>Creators</span><span>Publishers</span><span>Content teams</span><span>Service providers</span></section>
 
-    <section class="page active" id="page-dashboard">
-      <div class="hero">
-        <div class="hero-copy"><span class="eyebrow">STANDARD ACCESS · PRODUCTION</span><h1>One workspace from idea to published Pin.</h1><p>Import your own content, create or generate visuals, review every Pin, schedule it with safe spacing, and measure the authorized account with live Pinterest data.</p><div class="hero-actions"><button class="primary jump" data-page="create">Create a Pin</button><button class="secondary jump" data-page="blog">Import a blog</button></div></div>
-        <div class="hero-stack">
-          <div class="floating-card card-a"><span>Next scheduled</span><strong id="heroNext">—</strong><small>30-minute minimum spacing</small></div>
-          <div class="floating-card card-b"><span>Pin library</span><strong id="heroPins">0</strong><small>loaded on demand</small></div>
-          <div class="floating-pin"><div class="fp-image" id="heroPinImage"></div><div><b id="heroPinTitle">Visual analytics</b><small>images + metrics + links</small></div></div>
-        </div>
-      </div>
+<section id="workflow" class="section"><div class="section-head"><span class="eyebrow">ONE WORKFLOW</span><h2>From your content to a reviewed publishing queue.</h2><p>Manual controls stay available at every step. AI assistance is optional and never needs Pinterest account data.</p></div><div class="workflow">
+<article><span>01</span><div class="icon">↗</div><h3>Bring your content</h3><p>Paste a public article URL, connect a public WordPress site, enter a topic, or upload your own image.</p></article>
+<article><span>02</span><div class="icon">✦</div><h3>Create options</h3><p>Draft titles, descriptions, alt text, Board ideas and vertical visuals. Edit everything before use.</p></article>
+<article><span>03</span><div class="icon">✓</div><h3>Review each Pin</h3><p>Choose the exact image, text, Board, link and publishing time. Nothing is silently posted.</p></article>
+<article><span>04</span><div class="icon">◷</div><h3>Schedule & measure</h3><p>Queue approved Pins with 30-minute minimum spacing and view authorized organic analytics.</p></article>
+</div></section>
 
-      <div class="metric-grid">
-        <article class="metric-card"><span class="metric-icon">◉</span><div><small>Impressions</small><strong id="dashImpressions">—</strong><em>30 days</em></div></article>
-        <article class="metric-card"><span class="metric-icon">♡</span><div><small>Saves</small><strong id="dashSaves">—</strong><em>30 days</em></div></article>
-        <article class="metric-card"><span class="metric-icon">↗</span><div><small>Outbound clicks</small><strong id="dashOutbound">—</strong><em>30 days</em></div></article>
-        <article class="metric-card"><span class="metric-icon">◷</span><div><small>Scheduled</small><strong id="dashQueue">0</strong><em>approved items</em></div></article>
-      </div>
+<section id="features" class="section"><div class="section-head"><span class="eyebrow">VISUAL BY DEFAULT</span><h2>See the Pins, charts and workflow — not walls of text.</h2><p>The Studio loads authorized Pin pages through Pinterest API pagination and presents images alongside the data that belongs to the connected account.</p></div><div class="features">
+<article class="wide"><div><span class="pill">PIN LIBRARY</span><h3>Visual account library</h3><p>Images, titles, Board context, links and available Pin metrics with search, filters and sorting.</p></div><div class="visual-grid"><i></i><i></i><i></i><i></i></div></article>
+<article><span class="pill">BLOG → PIN</span><h3>Public WordPress connection</h3><p>No plugin or WordPress password is required for public published posts. Enter the site URL and the Studio uses the standard WordPress REST feed.</p><div class="bars"><i></i><i></i><i></i></div></article>
+<article><span class="pill">AI-READY</span><h3>Manual or generated</h3><p>Optional text and image generation from user-provided content. Pinterest API-derived account data stays out of AI prompts.</p><div class="bars purple"><i></i><i></i><i></i></div></article>
+<article><span class="pill">SCHEDULER</span><h3>Approval + safe spacing</h3><p>The server rejects queue slots that are less than 30 minutes apart and stores approved schedules in PostgreSQL.</p><div class="dots"><i></i><i></i><i></i></div></article>
+<article><span class="pill">ANALYTICS</span><h3>Real organic performance</h3><p>Trend charts and Top Pin visuals are rendered from the connected account's authorized API responses.</p><div class="spark"><svg viewBox="0 0 300 90" preserveAspectRatio="none"><polyline points="0,70 45,56 90,64 135,36 180,45 225,19 300,26" fill="none" stroke="currentColor" stroke-width="4"/></svg></div></article>
+</div></section>
 
-      <div class="dashboard-grid">
-        <article class="panel chart-panel"><div class="panel-head"><div><span class="kicker">PERFORMANCE</span><h2>30-day trend</h2></div><button class="icon-btn" id="refreshDashboard">↻</button></div><div class="chart-wrap"><canvas id="dashboardChart"></canvas><div class="chart-empty" id="dashboardChartEmpty">Connect Pinterest to load the chart.</div></div></article>
-        <article class="panel"><div class="panel-head"><div><span class="kicker">QUEUE</span><h2>Upcoming Pins</h2></div><button class="text-btn jump" data-page="scheduler">View all</button></div><div id="dashboardQueue" class="queue-list"><div class="empty-state">Nothing scheduled yet.</div></div></article>
-      </div>
+<section id="security" class="safety"><div><span class="eyebrow">POLICY-FIRST</span><h2>Built to protect your Pinterest connection.</h2><p>Official OAuth only. No Pinterest passwords, session-cookie collection, scraping, cross-account competitor benchmarking or hidden engagement automation.</p></div><div class="tags"><span>Official OAuth</span><span>User-selected Pins</span><span>No Pinterest scraping</span><span>No Pinterest-data AI training</span><span>Portable PostgreSQL</span><span>Independent branding</span></div></section>
 
-      <div class="panel recent-panel"><div class="panel-head"><div><span class="kicker">RECENT CONTENT</span><h2>Visual Pin library</h2></div><button class="text-btn jump" data-page="library">Open full library</button></div><div id="dashboardPins" class="mini-pin-grid"><div class="empty-state">Connect Pinterest to load your Pins.</div></div></div>
+<section id="pricing" class="section"><div class="section-head"><span class="eyebrow">PLANS</span><h2>Start free while checkout is finalized.</h2><p>Paid plan structure is visible now. Checkout buttons remain disabled until payment configuration is completed.</p></div><div class="pricing">
+<article><span>Launch access</span><h3>$0</h3><p>Explore the complete workflow.</p><ul><li>Publishing & Boards</li><li>Pin library & analytics</li><li>Blog import</li><li>Scheduler</li></ul><a class="primary" href="/app/?signup=1">Start free</a></article>
+<article><span>Starter</span><h3>$19<small>/mo</small></h3><p>For individual creators.</p><ul><li>Higher queue capacity</li><li>AI-ready workflow</li><li>Visual analytics</li></ul><button disabled>Checkout coming soon</button></article>
+<article class="featured"><b>PLANNED</b><span>Pro</span><h3>$39<small>/mo</small></h3><p>For serious publishers.</p><ul><li>Large publishing queue</li><li>Full creative workflow</li><li>Expanded capacity</li></ul><button disabled>Checkout coming soon</button></article>
+<article><span>Agency</span><h3>$79<small>/mo</small></h3><p>For service providers.</p><ul><li>Agency queue capacity</li><li>Client-ready operations</li><li>Billing portal path</li></ul><button disabled>Checkout coming soon</button></article>
+</div></section>
 
-      <div class="workflow-strip">
-        <div><span>1</span><strong>Import or create</strong><small>Your own website, keyword, image or design.</small></div><i>→</i>
-        <div><span>2</span><strong>Generate options</strong><small>AI optional; manual controls stay available.</small></div><i>→</i>
-        <div><span>3</span><strong>Review every Pin</strong><small>User selection is required before any write.</small></div><i>→</i>
-        <div><span>4</span><strong>Schedule & measure</strong><small>30-minute spacing and live organic analytics.</small></div>
-      </div>
-    </section>
-
-    <section class="page" id="page-create">
-      <div class="page-heading"><div><span class="eyebrow">CREATIVE STUDIO</span><h1>Create a Pin</h1><p>Manual controls first, AI assistance when you want it.</p></div><a class="secondary link-button" href="/api/pinterest?action=oauth&env=production">Connect Pinterest</a></div>
-      <div class="create-layout">
-        <div class="panel form-panel">
-          <div class="section-block"><span class="step">1</span><div><strong>Source</strong><small>Start with a keyword, article, or your own copy.</small></div></div>
-          <div class="form-grid two"><label>Keyword / topic<input id="keyword" maxlength="240" placeholder="small bedroom storage"></label><label>Brand / site<input id="brand" maxlength="160" placeholder="decorareas.com"></label></div>
-          <div class="button-row"><button class="secondary" id="generateCopy">Generate copy options</button><span class="status-chip" id="aiTextStatus">Smart draft ready</span></div>
-          <div id="copyVariants" class="variant-grid"></div>
-
-          <div class="section-block"><span class="step">2</span><div><strong>Publishing details</strong><small>Everything remains editable.</small></div></div>
-          <label>Board<select id="board"><option value="">Connect Pinterest first…</option></select></label>
-          <label>Title <span class="counter" id="titleCount">0 / 100</span><input id="title" maxlength="100" placeholder="Pin title"></label>
-          <label>Description<textarea id="description" rows="5" maxlength="800" placeholder="Pin description"></textarea></label>
-          <div class="form-grid two"><label>Destination URL<input id="destination" type="url" placeholder="https://your-site.com/article"></label><label>Alt text<input id="altText" maxlength="500" placeholder="Describe the visual"></label></div>
-
-          <div class="section-block"><span class="step">3</span><div><strong>Visual</strong><small>Upload, create a template, or use optional AI image generation.</small></div></div>
-          <div class="visual-tabs"><button class="visual-tab active" data-visual="upload">Upload</button><button class="visual-tab" data-visual="template">Template</button><button class="visual-tab" data-visual="ai">AI image</button></div>
-          <div class="visual-panel" id="visual-upload"><label>Pin image<input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="privacy-row"><button class="secondary" id="cleanMetadata">Remove private EXIF/GPS metadata</button><small>JPEG/PNG only. Image pixels and provenance / Content Credentials are preserved.</small></div></div>
-          <div class="visual-panel hidden" id="visual-template"><div class="form-grid two"><label>Template<select id="templateStyle"><option value="editorial">Editorial</option><option value="clean">Clean</option><option value="bold">Bold</option><option value="minimal">Minimal</option></select></label><label>Footer<input id="templateFooter" maxlength="60" placeholder="yourdomain.com"></label></div><button class="secondary" id="makeTemplate">Generate 2:3 template</button></div>
-          <div class="visual-panel hidden" id="visual-ai"><label>Image prompt<textarea id="imagePrompt" rows="4" placeholder="Describe the vertical Pin visual you want"></textarea></label><button class="secondary" id="generateImage">Generate AI image</button><div class="notice subtle" id="aiImageNotice">Requires an AI image provider key. Generated-image provenance is not removed or hidden.</div></div>
-
-          <div class="section-block"><span class="step">4</span><div><strong>Publish choice</strong><small>Publish now or schedule the exact reviewed Pin.</small></div></div>
-          <div class="publish-row"><button class="primary" id="publish" disabled>Review & publish now</button><div class="schedule-row"><input id="scheduleAt" type="datetime-local"><button class="secondary" id="schedulePin" disabled>Schedule</button></div></div>
-          <label class="approval"><input type="checkbox" id="approveSchedule"><span>I reviewed this exact Pin and approve the selected future publishing action.</span></label>
-          <div class="notice" id="publishNotice">Nothing is published or scheduled without explicit confirmation.</div>
-        </div>
-
-        <div class="preview-column">
-          <article class="panel preview-panel"><div class="panel-head"><div><span class="kicker">LIVE PREVIEW</span><h2>Pin card</h2></div><span class="ratio-pill">2:3</span></div><div id="preview" class="preview-image"><span>Choose or generate an image</span></div><div class="preview-copy"><h3 id="previewTitle">Your Pin title</h3><p id="previewDescription">Your description will appear here.</p><small id="previewDomain">your-site.com</small></div></article>
-          <canvas id="templateCanvas" width="1000" height="1500" class="hidden"></canvas>
-          <article class="panel guardrail"><span class="shield">✓</span><div><strong>Policy-safe workflow</strong><p>AI uses only the user-provided keyword/article/brand inputs. Pinterest API account data is not sent into AI generation.</p></div></article>
-        </div>
-      </div>
-    </section>
-
-    <section class="page" id="page-blog">
-      <div class="page-heading"><div><span class="eyebrow">BLOG → PIN</span><h1>Turn posts into reviewed Pin campaigns</h1><p>Connect a public WordPress site or import one article URL. Select a post, generate options, then choose exactly what to publish.</p></div></div>
-      <div class="blog-source-grid">
-        <article class="panel"><span class="kicker">WORDPRESS</span><h2>Load latest published posts</h2><p class="muted">Uses the public WordPress REST feed for the site you enter. No Pinterest scraping.</p><div class="url-row"><input id="wpSite" type="url" placeholder="https://yourwordpresssite.com"><button class="primary" id="loadWp">Load posts</button></div><div class="notice subtle" id="wpNotice">Up to 24 recent published posts will appear below.</div></article>
-        <article class="panel"><span class="kicker">SINGLE ARTICLE</span><h2>Import one URL</h2><p class="muted">Reads the page title, description, canonical URL and Open Graph image.</p><div class="url-row"><input id="articleUrl" type="url" placeholder="https://your-site.com/post"><button class="secondary" id="importArticle">Import</button></div><div class="notice subtle" id="articleNotice">Use content you own or are authorized to publish.</div></article>
-      </div>
-      <div class="panel"><div class="panel-head"><div><span class="kicker">CONTENT LIBRARY</span><h2>Your latest posts</h2></div><span id="wpCount" class="count-pill">0 posts</span></div><div id="wpPosts" class="post-grid"><div class="empty-state">Connect a WordPress site or import a single article.</div></div></div>
-      <div class="blog-workflow">
-        <article class="panel selected-article"><div class="panel-head"><div><span class="kicker">SELECTED ARTICLE</span><h2 id="selectedArticleTitle">No article selected</h2></div></div><div id="selectedArticleImage" class="article-hero"></div><p id="selectedArticleSummary" class="muted">Select a post above.</p><small id="selectedArticleUrl"></small></article>
-        <article class="panel"><div class="panel-head"><div><span class="kicker">GENERATE</span><h2>Create options</h2></div></div><div class="form-grid two"><label>Tone<select id="blogTone"><option>Helpful</option><option>Editorial</option><option>Friendly</option><option>Minimal</option></select></label><label>Audience<input id="blogAudience" placeholder="home decor readers"></label></div><button class="primary" id="blogGenerate">Generate Pin pack</button><div id="blogVariants" class="variant-grid"></div><div class="button-row"><button class="secondary" id="useBlogTemplate">Generate visual from article image</button><button class="secondary" id="useBlogAiImage">Generate AI visual</button></div><div class="notice subtle" id="blogGenerateNotice">You choose the final title, image, Board and schedule before anything is sent to Pinterest.</div></article>
-      </div>
-    </section>
-
-    <section class="page" id="page-scheduler">
-      <div class="page-heading"><div><span class="eyebrow">PUBLISHING QUEUE</span><h1>Scheduler</h1><p>Every item is individually reviewed and a 30-minute minimum gap is enforced by the server.</p></div><div class="button-row"><button class="secondary" id="runDue">Process due Pins now</button><button class="primary jump" data-page="create">Schedule a Pin</button></div></div>
-      <div class="scheduler-summary"><div><small>Active queue</small><strong id="queueCount">0</strong></div><div><small>Minimum gap</small><strong>30 min</strong></div><div><small>Queue capacity</small><strong id="queueLimit">—</strong></div><div><small>Timezone</small><strong id="timezoneLabel">Local</strong></div></div>
-      <div class="notice" id="schedulerNotice">Sign in to use the persistent scheduler.</div>
-      <article class="panel"><div class="panel-head"><div><span class="kicker">TIMELINE</span><h2>Upcoming & history</h2></div><button class="icon-btn" id="refreshSchedule">↻</button></div><div id="scheduleList" class="timeline"><div class="empty-state">No scheduled Pins yet.</div></div></article>
-    </section>
-
-    <section class="page" id="page-library">
-      <div class="page-heading"><div><span class="eyebrow">AUTHORIZED ACCOUNT</span><h1>Full Pin Library</h1><p>Pages through the Pinterest API until the authorized account's Pins are loaded. Nothing is scraped or stored as a Pinterest data warehouse.</p></div><button class="secondary" id="reloadPins">Reload all</button></div>
-      <div class="library-toolbar"><input id="pinSearch" placeholder="Search loaded Pins"><select id="pinBoardFilter"><option value="">All Boards</option></select><select id="pinSort"><option value="newest">Newest loaded</option><option value="impressions">Impressions</option><option value="saves">Saves</option><option value="clicks">Outbound clicks</option></select><span id="pinLoadProgress" class="status-chip">0 loaded</span></div>
-      <div class="notice" id="libraryNotice">Connect Pinterest to load your library.</div>
-      <div id="pinGrid" class="pin-grid"><div class="empty-state">No Pins loaded.</div></div>
-    </section>
-
-    <section class="page" id="page-analytics">
-      <div class="page-heading"><div><span class="eyebrow">ORGANIC ANALYTICS</span><h1>Performance</h1><p>Live metrics for the authorized Pinterest account.</p></div><div class="button-row"><select id="analyticsRange"><option value="30">30 days</option><option value="7">7 days</option><option value="90">90 days</option></select><button class="secondary" id="refreshAnalytics">Refresh</button></div></div>
-      <div class="notice" id="analyticsNotice">Connect Pinterest to load analytics.</div>
-      <div class="metric-grid"><article class="metric-card"><span class="metric-icon">◉</span><div><small>Impressions</small><strong id="metricImpressions">—</strong></div></article><article class="metric-card"><span class="metric-icon">♡</span><div><small>Saves</small><strong id="metricSaves">—</strong></div></article><article class="metric-card"><span class="metric-icon">↗</span><div><small>Pin clicks</small><strong id="metricClicks">—</strong></div></article><article class="metric-card"><span class="metric-icon">→</span><div><small>Outbound clicks</small><strong id="metricOutbound">—</strong></div></article></div>
-      <article class="panel chart-panel"><div class="panel-head"><div><span class="kicker">TREND</span><h2>Impressions over time</h2></div></div><div class="chart-wrap"><canvas id="analyticsChart"></canvas><div class="chart-empty" id="analyticsChartEmpty">Daily trend will appear here.</div></div></article>
-      <article class="panel recent-panel"><div class="panel-head"><div><span class="kicker">TOP CONTENT</span><h2>Top Pins with visuals</h2></div><span class="muted">Up to 50 from Pinterest analytics</span></div><div id="topPinCards" class="performance-grid"><div class="empty-state">Load analytics and your Pin library.</div></div></article>
-    </section>
-
-    <section class="page" id="page-boards">
-      <div class="page-heading"><div><span class="eyebrow">ORGANIZE</span><h1>Boards</h1><p>View the connected account's Boards and create only the Board you explicitly approve.</p></div><button class="secondary" id="refreshBoards">Refresh</button></div>
-      <div class="board-layout">
-        <article class="panel"><div class="panel-head"><div><span class="kicker">CREATE</span><h2>New Board</h2></div></div><label>Topic<input id="boardTopic" placeholder="small space storage"></label><button class="secondary" id="generateBoardCopy">Generate Board copy</button><label>Board name<input id="newBoardName" maxlength="100"></label><label>Description<textarea id="newBoardDescription" rows="5" maxlength="500"></textarea></label><button class="primary" id="createBoard">Review & create Board</button><div class="notice" id="boardNotice">Board creation always requires confirmation.</div></article>
-        <article class="panel"><div class="panel-head"><div><span class="kicker">YOUR BOARDS</span><h2>Connected Boards</h2></div><span id="boardCount" class="count-pill">0</span></div><div id="boardList" class="board-grid"><div class="empty-state">Connect Pinterest to load Boards.</div></div></article>
-      </div>
-    </section>
-
-    <section class="page" id="page-integrations">
-      <div class="page-heading"><div><span class="eyebrow">CONNECTIONS</span><h1>Integrations</h1><p>Visible status for every service that powers the product.</p></div></div>
-      <div class="integration-grid">
-        <article class="integration-card"><div class="integration-icon pinterest">P</div><div><h3>Pinterest</h3><p>OAuth, Boards, Pins and organic analytics.</p><span id="pinterestIntegration" class="status-chip">Checking…</span></div><a class="secondary link-button" href="/api/pinterest?action=oauth&env=production">Connect</a></article>
-        <article class="integration-card"><div class="integration-icon">DB</div><div><h3>PostgreSQL</h3><p>Accounts, secure sessions and scheduler queue.</p><span id="dbIntegration" class="status-chip">Checking…</span></div></article>
-        <article class="integration-card"><div class="integration-icon">AI</div><div><h3>AI provider</h3><p>Optional text and image generation from user-supplied content only.</p><span id="aiIntegration" class="status-chip">Checking…</span></div></article>
-        <article class="integration-card"><div class="integration-icon">WP</div><div><h3>WordPress</h3><p>Public published posts through WordPress REST.</p><span class="status-chip good">Ready</span></div><button class="secondary jump" data-page="blog">Use</button></article>
-        <article class="integration-card"><div class="integration-icon">S</div><div><h3>Stripe</h3><p>Subscription checkout and billing portal.</p><span id="billingIntegration" class="status-chip">Checking…</span></div><button class="secondary" id="manageBilling">Manage</button></article>
-        <article class="integration-card"><div class="integration-icon">SB</div><div><h3>Sandbox</h3><p>Separate Pinterest test environment.</p><span id="sandboxIntegration" class="status-chip">Checking…</span></div><a class="secondary link-button" href="/api/pinterest?action=oauth&env=sandbox">Connect</a></article>
-      </div>
-      <article class="panel compliance-panel"><div><span class="kicker">GUARDRAILS</span><h2>Protecting Standard access</h2></div><div class="compliance-tags"><span>Explicit Pin selection</span><span>No Pinterest scraping</span><span>No competitor benchmarking</span><span>No hidden engagement automation</span><span>No Pinterest-data AI training</span><span>Provenance preserved</span></div></article>
-    </section>
-
-    <section class="page" id="page-plans">
-      <div class="page-heading centered"><div><span class="eyebrow">SUBSCRIPTIONS</span><h1>Plans</h1><p>Stripe checkout is wired and activates when your Stripe product price IDs are configured.</p></div></div>
-      <div class="plan-grid">
-        <article class="plan-card"><span>Free</span><h2>$0</h2><p>Development and light use.</p><ul><li>25 active scheduled Pins</li><li>Publishing + analytics</li><li>Blog import</li></ul><button class="secondary" disabled>Free</button></article>
-        <article class="plan-card"><span>Starter</span><h2>$19<small>/mo</small></h2><p>For creators.</p><ul><li>250 active scheduled Pins</li><li>AI-ready workflow</li><li>Visual analytics</li></ul><button class="primary checkout" data-plan="starter">Choose Starter</button></article>
-        <article class="plan-card featured"><b>POPULAR</b><span>Pro</span><h2>$39<small>/mo</small></h2><p>For serious publishers.</p><ul><li>1,000 active scheduled Pins</li><li>Full content workflow</li><li>Priority capacity</li></ul><button class="primary checkout" data-plan="pro">Choose Pro</button></article>
-        <article class="plan-card"><span>Agency</span><h2>$79<small>/mo</small></h2><p>For client services.</p><ul><li>5,000 active scheduled Pins</li><li>Large queue</li><li>Billing portal</li></ul><button class="primary checkout" data-plan="agency">Choose Agency</button></article>
-      </div>
-      <div class="notice subtle" id="billingNotice">Sign in to manage a plan.</div>
-    </section>
-
-    <section class="page" id="page-settings">
-      <div class="page-heading"><div><span class="eyebrow">ACCOUNT & SECURITY</span><h1>Settings</h1><p>Workspace login, Pinterest authorization and data controls.</p></div></div>
-      <div class="settings-grid">
-        <article class="panel"><div class="panel-head"><div><span class="kicker">WORKSPACE</span><h2>Account</h2></div><span id="accountStatus" class="status-chip">Checking…</span></div><div id="authForms"><div class="auth-tabs"><button class="auth-tab active" data-auth="login">Sign in</button><button class="auth-tab" data-auth="signup">Create account</button></div><label>Email<input id="authEmail" type="email"></label><label>Password<input id="authPassword" type="password"></label><button class="primary wide" id="authSubmit">Sign in</button><div class="notice subtle" id="authNotice">A workspace account is required for durable scheduling.</div></div><div id="signedInPanel" class="hidden"><div class="account-card"><div class="avatar">DA</div><div><strong id="signedInEmail">—</strong><small>Plan: <span id="signedInPlan">free</span></small></div></div><button class="secondary" id="logout">Sign out</button></div></article>
-        <article class="panel"><div class="panel-head"><div><span class="kicker">PINTEREST</span><h2>Authorization</h2></div><span id="pinterestSetting" class="status-chip">Checking…</span></div><p class="muted">Official OAuth only. Decor Areas Studio never asks for Pinterest passwords or session cookies.</p><div class="button-row"><a class="primary link-button" href="/api/pinterest?action=oauth&env=production">Connect / reconnect</a><button class="secondary" id="disconnectPinterest">Disconnect browser</button></div></article>
-        <article class="panel"><div class="panel-head"><div><span class="kicker">DATA</span><h2>Delete workspace</h2></div></div><p class="muted">Deletes the workspace account and cascading application records from the connected database.</p><button class="danger" id="deleteAccount">Delete workspace account</button></article>
-        <article class="panel"><div class="panel-head"><div><span class="kicker">LEGAL</span><h2>Policies</h2></div></div><div class="legal-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/security/">Security</a><a href="/data-deletion/">Data deletion</a></div></article>
-      </div>
-    </section>
-  </main>
-</div>
-<div class="toast" id="toast"></div>
-<script src="/app.js"></script>
-</body>
-</html>
+<section class="cta"><div><span class="eyebrow">READY TO USE</span><h2>Create your workspace and connect Pinterest.</h2><p>Sign up, authorize your own Pinterest account, optionally add your WordPress site, and start building reviewed Pin workflows.</p></div><a class="primary big" href="/app/?signup=1">Create free workspace</a></section>
+</main>
+<footer><a class="brand" href="/"><span class="brand-mark">DA</span><span><strong>Decor Areas Studio</strong><small>Independent publishing software</small></span></a><div><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/security/">Security</a><a href="/data-deletion/">Data deletion</a></div></footer>
+</body></html>
