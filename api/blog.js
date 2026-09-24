@@ -32,6 +32,13 @@ export default async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   const action=String(req.query.action||'article');
   try{
+    if(action==='image'){
+      const raw=String(req.query.url||'').trim();if(!raw)return res.status(400).json({error:'Image URL is required.'});
+      const {response}=await safeFetch(raw),type=String(response.headers.get('content-type')||'');
+      if(!/^image\/(jpeg|png|webp)$/i.test(type.split(';')[0]))return res.status(400).json({error:'Only JPG, PNG and WebP article images are supported.'});
+      const buf=Buffer.from(await response.arrayBuffer());if(buf.length>5*1024*1024)return res.status(413).json({error:'Article image is larger than 5 MB.'});
+      return res.status(200).json({ok:true,content_type:type.split(';')[0],data:buf.toString('base64')});
+    }
     if(action==='wordpress'){
       const raw=String(req.query.site||'').trim();if(!raw)return res.status(400).json({error:'Enter your WordPress site URL.'});
       const root=await validate(raw.startsWith('http')?raw:'https://'+raw),endpoint=new URL('/wp-json/wp/v2/posts',root);
