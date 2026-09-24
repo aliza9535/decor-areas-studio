@@ -238,10 +238,33 @@
     </section>
 
     <section class="page" id="page-settings">
-      <div class="page-heading"><div><span class="eyebrow">ACCOUNT & SECURITY</span><h1>Settings</h1><p>Workspace login, Pinterest authorization and data controls.</p></div></div>
+      <div class="page-heading"><div><span class="eyebrow">ACCOUNT & SECURITY</span><h1>Settings</h1><p>Your Decor Areas Studio account and Pinterest connection are separate. Studio uses its own email/password; Pinterest is connected only through OAuth.</p></div></div>
       <div class="settings-grid">
-        <article class="panel"><div class="panel-head"><div><span class="kicker">WORKSPACE</span><h2>Account</h2></div><span id="accountStatus" class="status-chip">Checking…</span></div><div id="authForms"><div class="auth-tabs"><button class="auth-tab active" data-auth="login">Sign in</button><button class="auth-tab" data-auth="signup">Create account</button></div><label>Email<input id="authEmail" type="email"></label><label>Password<input id="authPassword" type="password"></label><button class="primary wide" id="authSubmit">Sign in</button><a class="secondary link-button wide" id="ownerRecover" href="/api/pinterest?action=oauth&env=production&recovery=1">Forgot owner password? Recover with linked Pinterest</a><div class="notice subtle" id="authNotice">A workspace account is required for durable scheduling.</div></div><div id="signedInPanel" class="hidden"><div class="account-card"><div class="avatar">DA</div><div><strong id="signedInEmail">—</strong><small>Plan: <span id="signedInPlan">free</span> · <span id="signedInRole">user</span></small></div></div><div class="verification-row"><span id="verificationStatus" class="status-chip">Checking email…</span><button class="secondary hidden" id="resendVerification">Resend verification</button></div><div class="password-box"><label>Current password<input id="currentPassword" type="password" autocomplete="current-password" placeholder="Leave blank after Pinterest owner recovery"></label><label>New password<input id="newPassword" type="password" autocomplete="new-password" minlength="8"></label><button class="secondary" id="changePassword">Change password</button></div><button class="secondary" id="logout">Sign out</button></div></article>
-        <article class="panel"><div class="panel-head"><div><span class="kicker">PINTEREST</span><h2>Authorization</h2></div><span id="pinterestSetting" class="status-chip">Checking…</span></div><p class="muted">Official OAuth only. Decor Areas Studio never asks for Pinterest passwords or session cookies.</p><div class="button-row"><a class="primary link-button" href="/api/pinterest?action=oauth&env=production">Connect / reconnect</a><button class="secondary" id="disconnectPinterest">Disconnect browser</button></div></article>
+        <article class="panel account-panel"><div class="panel-head"><div><span class="kicker">DECOR AREAS STUDIO</span><h2>Workspace account</h2></div><span id="accountStatus" class="status-chip">Checking…</span></div>
+          <div class="account-explainer"><strong>Studio password ≠ Pinterest password</strong><p>Your Studio password signs you into this SaaS. We never ask for or store your Pinterest password.</p></div>
+          <div id="authForms">
+            <div class="auth-tabs"><button class="auth-tab active" data-auth="login">Sign in</button><button class="auth-tab" data-auth="signup">Create account</button></div>
+            <label>Studio email<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+            <label>Studio password<input id="authPassword" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters"></label>
+            <button class="primary wide" id="authSubmit">Sign in</button>
+            <a class="secondary link-button wide" id="ownerRecover" href="/api/pinterest?action=oauth&env=production&recovery=1">Owner forgot Studio password? Recover with linked Pinterest</a>
+            <div class="notice subtle" id="authNotice">Sign in to keep your scheduler, website connections and credits attached to your workspace.</div>
+          </div>
+          <div id="signedInPanel" class="hidden">
+            <div class="account-card"><div class="avatar">DA</div><div><small class="account-label">SIGNED IN TO DECOR AREAS STUDIO</small><strong id="signedInEmail">—</strong><small>Plan: <span id="signedInPlan">free</span> · Role: <span id="signedInRole">user</span></small></div></div>
+            <div id="signupSessionNotice" class="notice subtle hidden">You are already signed in. To create a different workspace account in this browser, sign out first. <button class="text-btn" id="signOutToSignup">Sign out & create another account</button></div>
+            <div class="verification-row"><span id="verificationStatus" class="status-chip">Checking email…</span><button class="secondary hidden" id="resendVerification">Resend verification</button></div>
+            <div class="password-box">
+              <div><strong>Change Decor Areas Studio password</strong><small>This does not change your Pinterest password.</small></div>
+              <label>Current Studio password<input id="currentPassword" type="password" autocomplete="current-password" placeholder="Your current Studio password"></label>
+              <label>New Studio password<input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters"></label>
+              <button class="secondary" id="changePassword">Save new Studio password</button>
+              <div class="notice subtle hidden" id="passwordNotice"></div>
+            </div>
+            <button class="secondary" id="logout">Sign out of Studio</button>
+          </div>
+        </article>
+        <article class="panel"><div class="panel-head"><div><span class="kicker">PINTEREST</span><h2>Pinterest connection</h2></div><span id="pinterestSetting" class="status-chip">Checking…</span></div><p class="muted">Pinterest uses official OAuth. You authorize access on Pinterest's own screen; Decor Areas Studio never receives your Pinterest password.</p><div class="button-row"><a class="primary link-button" href="/api/pinterest?action=oauth&env=production">Connect / reconnect Pinterest</a><button class="secondary" id="disconnectPinterest">Disconnect this browser</button></div><div class="notice subtle" id="pinterestSpeedNotice">Connection status should appear quickly. Pins and analytics load separately in the background so the app stays responsive.</div></article>
         <article class="panel"><div class="panel-head"><div><span class="kicker">DATA</span><h2>Delete workspace</h2></div></div><p class="muted">Deletes the workspace account and cascading application records from the connected database.</p><button class="danger" id="deleteAccount">Delete workspace account</button></article>
         <article class="panel"><div class="panel-head"><div><span class="kicker">LEGAL</span><h2>Policies</h2></div></div><div class="legal-links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/security/">Security</a><a href="/data-deletion/">Data deletion</a></div></article>
       </div>
