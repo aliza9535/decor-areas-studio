@@ -51,5 +51,5 @@ $('#clearPlanner').onclick=clearLocal;$('#clearWorkspace').onclick=clearLocal;
 
 $('#disconnectPinterest').onclick=async()=>{if(!confirm('Disconnect Pinterest from this browser?'))return;try{await api('/api/pinterest?action=disconnect',{method:'POST'});location.href='/?disconnected=1'}catch(e){alert(e.message||'Could not disconnect')}};
 
-loadAccount();loadStatus();loadAnalytics();renderPlanner();
-const qs=new URLSearchParams(location.search);if(qs.get('oauth'))show(qs.get('oauth')==='sandbox-connected'?'settings':'dashboard');
+async function init(){renderPlanner();await loadStatus();if(state.productionConnected){await Promise.all([loadAccount(),loadAnalytics()])}else{$('#accountLabel').textContent='Not connected'}const qs=new URLSearchParams(location.search);if(qs.get('oauth'))show(qs.get('oauth')==='sandbox-connected'?'settings':'dashboard')}
+init();
